@@ -1,0 +1,241 @@
+<div class="w-64 border-r border-white/20 relative overflow-hidden">
+  <!-- Background Image -->
+  <div class="absolute inset-0 z-0">
+    <img src="<%= s3_image_url('photo.jpeg') %>" alt="Background" class="w-full h-full object-cover">
+    <div class="absolute inset-0"></div>
+  </div>
+  
+  <div class="p-6 relative z-10">
+    <!-- User Profile Section with Notification Bell -->
+    <div class="flex items-center mb-6">
+      <%= link_to my_account_my_profile_path, class: "flex-1 flex items-center hover:bg-white/10 p-2 rounded-lg transition" do %>
+        <div class="mr-3">
+          <% if current_user.avatar.attached? %>
+            <%= image_tag url_for(current_user.avatar), class: "h-12 w-12 rounded-full object-cover border-2 border-white" %>
+          <% else %>
+            <div class="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+          <% end %>
+        </div>
+        <div class="flex-1 min-w-0 mr-2">
+          <h2 class="text-base font-bold text-white truncate">
+            <% if current_user.first_name.length + current_user.last_name.length > 15 %>
+              <%= current_user.last_name %>
+            <% else %>
+              <%= current_user.first_name %> <%= current_user.last_name %>
+            <% end %>
+          </h2>
+          <p class="text-xs text-blue-200 truncate">
+            <% if current_user.email.length > 20 %>
+              <%= current_user.email.first(17) %>...
+            <% else %>
+              <%= current_user.email %>
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+      
+      <!-- Notification Bell -->
+      <% if current_user.company && current_user.business_owner? %>
+        <div class="relative" id="sidebar-notifications">
+          <button type="button" class="text-white hover:text-blue-200 transition" onclick="toggleNotificationsDropdown(event)">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            
+            <% if current_user.company.notifications.unread.any? %>
+              <span class="absolute -top-1 -right-1 block h-4 w-4 rounded-full bg-red-500 text-xs text-white text-center">
+                <%= current_user.company.notifications.unread.count %>
+              </span>
+            <% end %>
+          </button>
+          
+          <!-- Dropdown Menu -->
+          <div id="notifications-dropdown" class="fixed left-64 ml-2 w-80 bg-white rounded-md shadow-xl overflow-hidden hidden" style="z-index: 9999; top: 0;">
+            <div class="py-2">
+              <h6 class="dropdown-header px-4 py-2 text-sm font-medium text-gray-700 border-b"><%= t('notifications.title') %></h6>
+              
+              <% if current_user.company && current_user.company.notifications.recent.any? %>
+                <% current_user.company.notifications.recent.each do |notification| %>
+                  <%= render partial: "my_account/notifications/notification", locals: { notification: notification } %>
+                <% end %>
+              <% else %>
+                <div class="px-4 py-6 text-sm text-gray-500 text-center">
+                  <%= t('notifications.no_notifications') %>
+                </div>
+              <% end %>
+              
+              <div class="dropdown-divider border-t"></div>
+              <div class="px-4 py-2 text-xs text-center">
+                <%= link_to t('notifications.view_all'), my_account_notifications_path, class: "text-blue-500 hover:text-blue-700" %>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            function toggleNotificationsDropdown(event) {
+              event.preventDefault();
+              event.stopPropagation();
+              const dropdown = document.getElementById('notifications-dropdown');
+              dropdown.classList.toggle('hidden');
+              
+              // Position the dropdown
+              if (!dropdown.classList.contains('hidden')) {
+                const button = event.currentTarget;
+                const buttonRect = button.getBoundingClientRect();
+                dropdown.style.top = `${buttonRect.top}px`;
+                // Ensure the dropdown is visible over the page content
+                dropdown.style.zIndex = '9999';
+              }
+            }
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+              const dropdown = document.getElementById('notifications-dropdown');
+              const container = document.getElementById('sidebar-notifications');
+              if (!container.contains(event.target) && !dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+              }
+            });
+          </script>
+        </div>
+      <% end %>
+    </div>
+    
+    <!-- Company Selector -->
+    <div class="mb-8">
+      <h3 class="text-sm font-medium text-white/70 mb-2">Current Company</h3>
+      <div class="relative" id="company-selector">
+        <button type="button" class="w-full flex items-center justify-between bg-white/10 backdrop-blur-sm text-white p-3 rounded-lg hover:bg-white/20 transition" onclick="toggleCompanyDropdown(event)">
+          <div class="flex items-center">
+            <% if current_user.company && current_user.company.brand_photo.attached? %>
+              <%= image_tag url_for(current_user.company.brand_photo), class: "h-6 w-6 rounded-full mr-2 object-cover" %>
+            <% else %>
+              <div class="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center mr-2">
+                <span class="text-xs text-white font-bold"><%= current_user.company ? current_user.company.name.first : "C" %></span>
+              </div>
+            <% end %>
+            <span class="text-sm font-medium truncate"><%= current_user.company ? current_user.company.name : "Select Company" %></span>
+          </div>
+          <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        <!-- Dropdown Menu -->
+        <div id="company-dropdown" class="absolute left-0 right-0 mt-2 bg-white rounded-md shadow-xl overflow-hidden hidden z-50">
+          <div class="py-1">
+            <% if current_user.company %>
+              <%= button_to my_account_switch_company_path(company_id: current_user.company.id), 
+                  class: "w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 #{session[:current_company_id] == current_user.company.id.to_s ? 'bg-gray-100' : ''}" do %>
+                <div class="flex items-center">
+                  <% if current_user.company.brand_photo.attached? %>
+                    <%= image_tag url_for(current_user.company.brand_photo), class: "h-6 w-6 rounded-full object-cover mr-2" %>
+                  <% else %>
+                    <div class="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                  <% end %>
+                  <%= current_user.company.name %>
+                  <% if session[:current_company_id] == current_user.company.id.to_s %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  <% end %>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="px-4 py-2 text-sm text-gray-500">
+                <%= t('company.no_companies') %>
+              </div>
+            <% end %>
+            
+            <div class="border-t"></div>
+            <a href="<%= new_my_account_company_path %>" class="block px-4 py-2 text-sm text-blue-500 hover:bg-gray-100">
+              <i class="fas fa-plus-circle mr-2"></i> <%= t('company.add_new') %>
+            </a>
+          </div>
+        </div>
+        
+        <script>
+          function toggleCompanyDropdown(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('company-dropdown').classList.toggle('hidden');
+          }
+          
+          // Close dropdown when clicking outside
+          document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('company-dropdown');
+            const container = document.getElementById('company-selector');
+            if (!container.contains(event.target) && !dropdown.classList.contains('hidden')) {
+              dropdown.classList.add('hidden');
+            }
+          });
+        </script>
+      </div>
+    </div>
+    
+    <% 
+      # Determine current controller and action
+      current_controller = controller_name
+      current_action = action_name
+      
+      # Set active classes
+      active_class = "block rounded-lg bg-white/20 backdrop-blur-sm text-white p-4 hover:bg-white/30 transition border-l-4 border-blue-400"
+      inactive_class = "block rounded-lg bg-white/10 backdrop-blur-sm text-white p-4 hover:bg-white/20 transition"
+    %>
+    
+    <div class="space-y-3">
+      
+      <% if current_user.business_owner? %>
+        <a href="<%= my_account_root_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'dashboard' && current_action == 'index') ? active_class : inactive_class %>">
+          <%= t('profile.sidebar.dashboard') %>
+        </a>
+        
+        <a href="<%= my_account_my_company_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'companies' && current_action == 'my_company') ? active_class : inactive_class %>">
+          <%= t('profile.sidebar.my_company') %>
+        </a>
+        
+        <a href="<%= my_account_my_reviews_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'company_reviews' && current_action == 'index') ? active_class : inactive_class %>">
+          <%= t('profile.sidebar.my_reviews') %>
+        </a>
+        
+        <a href="<%= my_account_notifications_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'notifications') ? active_class : inactive_class %>">
+          <%= t('profile.sidebar.notifications') %>
+        </a>
+        
+        <a href="#" class="<%= inactive_class %>">
+          <%= t('profile.sidebar.team') %>
+        </a>
+      <% end %>
+      
+      <a href="<%= my_account_my_uploads_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'csv_uploads' && current_action == 'my_uploads') ? active_class : inactive_class %>">
+        <%= t('profile.sidebar.my_csv_uploads') %>
+      </a>
+      
+      <a href="#" class="<%= inactive_class %>">
+        <%= t('profile.sidebar.excel_report') %>
+      </a>
+    </div>
+    
+    <!-- Add padding at the bottom to make space for the logout button -->
+    <div class="pb-20"></div>
+    
+    <!-- Logout button at the bottom -->
+    <div class="fixed bottom-6 left-6" style="width: calc(16rem - 48px);">
+      <form action="/my_account/logout" method="post" class="w-full">
+        <input type="hidden" name="_method" value="delete">
+        <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+        <button type="submit" class="w-full rounded-lg bg-white text-gray-800 p-4 hover:bg-gray-100 transition text-center font-medium">
+          <i class="fas fa-sign-out-alt mr-2"></i> <%= t('profile.sidebar.logout') %>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

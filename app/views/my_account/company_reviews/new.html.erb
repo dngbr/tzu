@@ -1,0 +1,140 @@
+<div class="min-h-screen relative flex items-center justify-center">
+  <!-- Background image with overlay -->
+  <div class="absolute inset-0 w-full h-full">
+    <img src="<%= s3_image_url('hero.png') %>" alt="Hero Background" class="w-full h-full object-cover">
+    <div class="absolute inset-0"></div>
+  </div>
+  
+  <div class="relative z-10 w-full max-w-md md:max-w-2xl px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden md:max-w-2xl border border-blue-200">
+    <div class="md:flex">
+      <div class="md:shrink-0 p-4 flex items-center justify-center bg-gray-100">
+        <% if @company.brand_photo.attached? %>
+          <%= image_tag url_for(@company.brand_photo), class: "h-32 w-32 object-cover rounded-lg" %>
+        <% else %>
+          <div class="h-32 w-32 bg-gray-200 flex items-center justify-center rounded-lg">
+            <span class="text-3xl font-bold text-gray-400"><%= @company.name.first.upcase %></span>
+          </div>
+        <% end %>
+      </div>
+      <div class="p-8">
+        <div class="uppercase tracking-wide text-sm text-blue-600 font-semibold"><%= t('company_reviews.leave_review') %></div>
+        <h1 class="mt-1 text-2xl font-bold text-black"><%= @company.name %></h1>
+        <p class="mt-2 text-black"><%= @company.description %></p>
+      </div>
+    </div>
+    
+    <% if flash[:thank_you] %>
+      <div class="p-8 border-t border-blue-100">
+        <div class="text-center">
+          <div class="mb-4">
+            <svg class="mx-auto h-12 w-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold mb-4 text-black"><%= t('company_reviews.thank_you.title') %></h2>
+          <p class="text-gray-600 mb-6"><%= t('company_reviews.thank_you.message', company: @company.name) %></p>
+        </div>
+      </div>
+    <% else %>
+      <div class="p-8 border-t border-blue-100">
+        <h2 class="text-xl font-semibold mb-4 text-black"><%= t('company_reviews.your_feedback') %></h2>
+        
+        <%= form_with(model: @company_review, url: review_company_path(company_id: @company.id), class: "space-y-6") do |form| %>
+          <% if @company_review.errors.any? %>
+            <div class="bg-red-50 p-4 rounded-md">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-red-800"><%= t('errors.messages.form_errors', count: @company_review.errors.count) %></h3>
+                  <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                      <% @company_review.errors.full_messages.each do |message| %>
+                        <li><%= message %></li>
+                      <% end %>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+          
+          <div>
+            <%= form.label :reviewer_name, t('company_reviews.form.name'), class: "block text-sm font-medium leading-6 text-black" %>
+            <div class="mt-2">
+              <%= form.text_field :reviewer_name, class: "block w-full rounded-md border-0 py-1.5 text-black shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3" %>
+            </div>
+          </div>
+          
+          <div>
+            <%= form.label :reviewer_phone, t('company_reviews.form.phone'), class: "block text-sm font-medium leading-6 text-black" %>
+            <div class="mt-2">
+              <%= form.telephone_field :reviewer_phone, class: "block w-full rounded-md border-0 py-1.5 text-black shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3" %>
+            </div>
+          </div>
+          
+          <div class="mb-6">
+            <div class="flex items-center">
+              <%= form.label :rating, t('company_reviews.form.rating_with_help'), class: "text-sm font-medium leading-6 text-black mr-3" %>
+              <div class="flex items-center space-x-1" id="star-rating-container">
+                <% (1..5).each do |star| %>
+                  <div class="relative">
+                    <%= form.radio_button :rating, star, class: "sr-only", id: "star-#{star}", onchange: "updateStars(#{star})" %>
+                    <label for="star-<%= star %>" class="cursor-pointer text-3xl star-label" data-star="<%= star %>">
+                      ★
+                    </label>
+                  </div>
+                <% end %>
+                <span class="ml-2 text-sm text-gray-400" id="rating-help-text">(click stars to select)</span>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            // Initialize stars based on current value (if any)
+            document.addEventListener('DOMContentLoaded', function() {
+              // Get the currently selected rating (if any)
+              const checkedStar = document.querySelector('input[name="company_review[rating]"]:checked');
+              if (checkedStar) {
+                updateStars(checkedStar.value);
+              }
+            });
+            
+            // Update stars when a rating is selected
+            function updateStars(rating) {
+              const stars = document.querySelectorAll('.star-label');
+              stars.forEach(star => {
+                const starValue = parseInt(star.getAttribute('data-star'));
+                if (starValue <= rating) {
+                  star.classList.add('text-yellow-400');
+                  star.classList.remove('text-gray-300');
+                } else {
+                  star.classList.add('text-gray-300');
+                  star.classList.remove('text-yellow-400');
+                }
+              });
+            }
+          </script>
+          
+          <div>
+            <%= form.label :content, t('company_reviews.form.review'), class: "block text-sm font-medium leading-6 text-black" %>
+            <div class="mt-2">
+              <%= form.text_area :content, rows: 4, class: "block w-full rounded-md border-0 py-1.5 text-black shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3" %>
+            </div>
+          </div>
+          
+          <div>
+            <%= form.submit t('company_reviews.form.submit'), class: "flex w-full justify-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    </div>
+  </div>
+</div>
+
+<%= render 'shared/footer' %>

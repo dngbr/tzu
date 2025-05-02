@@ -1,0 +1,105 @@
+<div class="flex min-h-screen">
+  <!-- Sidebar Navigation -->
+  <%= render 'shared/sidebar' %>
+  
+  <!-- Main Content Area -->
+  <div class="flex-1 p-8">
+    <div class="max-w-3xl mx-auto">
+      <h1 class="text-3xl font-bold mb-6"><%= t('company.edit_company_title') %></h1>
+      
+      <div class="bg-white rounded-lg shadow p-6">
+        <%= form_with(model: [:my_account, @company], local: true, class: "space-y-6", html: { multipart: true }) do |f| %>
+          <% if @company.errors.any? %>
+            <div class="bg-red-50 text-red-700 p-4 rounded mb-6">
+              <h2 class="text-lg font-medium"><%= pluralize(@company.errors.count, "error") %> prohibited this company from being saved:</h2>
+              <ul class="list-disc pl-5 mt-2">
+                <% @company.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <!-- Photos Section -->
+          <div class="mb-6 space-y-6">
+            <!-- Background Photo Upload -->
+            <div class="p-4 border border-gray-200 rounded-lg">
+              <h3 class="text-lg font-medium mb-2"><%= t('company.background_photo') %></h3>
+              
+              <% if @company.background_photo.attached? && @company.background_photo.persisted? %>
+                <div class="mb-4">
+                  <p class="text-sm text-gray-600 mb-2"><%= t('company.current_background_photo') %>:</p>
+                  <%= image_tag url_for(@company.background_photo), class: "w-full h-40 object-cover rounded-lg" %>
+                </div>
+              <% end %>
+              
+              <div class="mt-2">
+                <%= f.file_field :background_photo, class: "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" %>
+                <p class="text-xs text-gray-500 mt-1"><%= t('company.background_photo_help') %></p>
+              </div>
+            </div>
+            
+            <!-- Brand Photo Upload -->
+            <div class="p-4 border border-gray-200 rounded-lg">
+              <h3 class="text-lg font-medium mb-2"><%= t('company.brand_photo') %></h3>
+              
+              <% if @company.brand_photo.attached? && @company.brand_photo.persisted? %>
+                <div class="mb-4">
+                  <p class="text-sm text-gray-600 mb-2"><%= t('company.current_brand_photo') %>:</p>
+                  <div class="w-32 h-32 overflow-hidden rounded-lg mx-auto">
+                    <%= image_tag url_for(@company.brand_photo), class: "w-full h-full object-cover" %>
+                  </div>
+                </div>
+              <% end %>
+              
+              <div class="mt-2">
+                <%= f.file_field :brand_photo, class: "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" %>
+                <p class="text-xs text-gray-500 mt-1"><%= t('company.brand_photo_help') %></p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <%= f.label :name, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.text_field :name, class: "w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" %>
+          </div>
+
+          <div>
+            <%= f.label :description, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.text_area :description, rows: 4, class: "w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" %>
+            <p class="text-xs text-gray-500 mt-1"><%= t('company.description_help') %></p>
+          </div>
+
+          <div>
+            <%= f.label :address, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.text_field :address, class: "w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" %>
+          </div>
+
+          <div>
+            <%= f.label :phone, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.telephone_field :phone, class: "w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" %>
+          </div>
+
+          <div>
+            <%= f.label :website, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.url_field :website, class: "w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" %>
+            <p class="text-xs text-gray-500 mt-1"><%= t('company.website_help') %></p>
+          </div>
+          
+          <div>
+            <%= f.label :preferred_language, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.select :preferred_language, 
+                         options_for_select([['English', 'en'], ['Romanian', 'ro']], @company.preferred_language),
+                         { include_blank: t('company.no_language_preference') },
+                         { class: "w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" } %>
+            <p class="text-xs text-gray-500 mt-1"><%= t('company.language_help') %></p>
+          </div>
+
+          <div class="pt-4">
+            <%= f.submit t('company.update_button'), class: "w-full bg-gray-700 text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

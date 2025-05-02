@@ -1,0 +1,366 @@
+<div class="flex min-h-screen">
+  <!-- Sidebar Navigation -->
+  <%= render 'shared/sidebar' %>
+  
+  <!-- Main Content Area -->
+  <div class="flex-1 p-8">
+    <div class="mb-8 flex items-center justify-between">
+      <h1 class="text-2xl font-bold"><%= t('company_reviews.title') %></h1>
+      
+      <div class="text-sm text-gray-600">
+        <%= @company.name %>
+      </div>
+    </div>
+    
+    <% if @company_reviews.any? %>
+      <!-- Analysis Section -->
+      <div class="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold"><%= t('company_reviews.analysis.title') %></h2>
+          
+          <% if @can_analyze %>
+            <div id="analysis-controls">
+              <button id="analyze-button" type="button" class="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700 transition">
+                <span id="button-text"><%= t('company_reviews.analysis.analyze_button') %></span>
+              </button>
+            </div>
+          <% else %>
+            <div class="text-sm text-gray-500">
+              <% if @analysis %>
+                <%= t('company_reviews.analysis.last_analyzed', date: l(@analysis.last_analyzed_at, format: :long)) %>
+              <% end %>
+              <div class="mt-1"><%= t('company_reviews.analysis.need_more_reviews') %></div>
+            </div>
+          <% end %>
+        </div>
+        
+        <!-- JavaScript for handling analysis request and polling -->
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const analyzeButton = document.getElementById('analyze-button');
+            const spinner = document.getElementById('spinner');
+            const buttonText = document.getElementById('button-text');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const statusText = document.getElementById('status-text');
+            
+            // Store the job ID
+            let currentJobId = null;
+            // Store the polling interval ID
+            let pollingInterval = null;
+            // Progress counter for animation
+            let progressCounter = 0;
+            
+            analyzeButton.addEventListener('click', function() {
+              // Hide the analyze button
+              const analysisControls = document.getElementById('analysis-controls');
+              if (analysisControls) {
+                analysisControls.classList.add('hidden');
+              }
+              
+              // Hide the "No analysis yet" message and show the loading bar
+              const noAnalysisMessage = document.getElementById('no-analysis-message');
+              const analysisInProgress = document.getElementById('analysis-in-progress');
+              
+              if (noAnalysisMessage && analysisInProgress) {
+                noAnalysisMessage.classList.add('hidden');
+                analysisInProgress.classList.remove('hidden');
+              }
+              
+              // Make the request to start analysis
+              fetch('<%= my_account_analyze_reviews_path %>', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                },
+                credentials: 'same-origin'
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.job_id) {
+                  currentJobId = data.job_id;
+                  
+                  // Start polling for job status
+                  startPolling();
+                } else {
+                  // Handle error
+                  showError(data.error || 'Failed to start analysis');
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                showError('An error occurred while starting the analysis');
+              });
+            });
+            
+            function startPolling() {
+              // Clear any existing polling
+              if (pollingInterval) clearInterval(pollingInterval);
+              
+              // Start the progress animation
+              progressCounter = 10; // Start at 10%
+              updateProgress();
+              
+              // Poll every 2 seconds
+              pollingInterval = setInterval(checkJobStatus, 2000);
+            }
+            
+            function checkJobStatus() {
+              if (!currentJobId) return;
+              
+              // Properly construct the URL with job_id parameter
+              const url = new URL('<%= my_account_check_analysis_status_path %>', window.location.origin);
+              url.searchParams.append('job_id', currentJobId);
+              
+              fetch(url.toString(), {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                },
+                credentials: 'same-origin'
+              })
+              .then(response => response.json())
+              .then(data => {
+                // Update progress animation based on status
+                if (data.status === 'processing') {
+                  // Increment progress counter for animation
+                  progressCounter = Math.min(progressCounter + 5, 90);
+                  updateProgress();
+                  statusText.innerText = '<%= t("company_reviews.analysis.analyzing") %>';
+                } else if (data.completed) {
+                  // Job is completed or failed
+                  clearInterval(pollingInterval);
+                  
+                  if (data.status === 'completed') {
+                    // Success - set progress to 100%
+                    progressCounter = 100;
+                    updateProgress();
+                    statusText.innerText = '<%= t("company_reviews.analysis.completed") %>';
+                    
+                    // Redirect after a short delay to show the completed state
+                    setTimeout(function() {
+                      window.location.reload();
+                    }, 1000);
+                  } else {
+                    // Failed
+                    showError(data.error || 'Analysis failed');
+                  }
+                }
+              })
+              .catch(error => {
+                console.error('Error checking job status:', error);
+                // Continue polling despite error
+              });
+            }
+            
+            function updateProgress() {
+              // Update the main progress bar
+              const mainProgressBar = document.getElementById('main-progress-bar');
+              if (mainProgressBar) {
+                mainProgressBar.style.width = `${progressCounter}%`;
+              }
+            }
+            
+            function showError(message) {
+              // Stop polling
+              if (pollingInterval) clearInterval(pollingInterval);
+              
+              // Show the analyze button again
+              const analysisControls = document.getElementById('analysis-controls');
+              if (analysisControls) {
+                analysisControls.classList.remove('hidden');
+              }
+              
+              // Hide the analysis in progress section
+              const analysisInProgress = document.getElementById('analysis-in-progress');
+              if (analysisInProgress) {
+                analysisInProgress.classList.add('hidden');
+              }
+              
+              // Show the no analysis message again
+              const noAnalysisMessage = document.getElementById('no-analysis-message');
+              if (noAnalysisMessage) {
+                noAnalysisMessage.classList.remove('hidden');
+              }
+              
+              // Show error message
+              alert(message);
+            }
+          });
+        </script>
+        
+        <% if @analysis %>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Summary -->
+            <div class="md:col-span-3 bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-medium mb-2"><%= t('company_reviews.analysis.summary') %></h3>
+              <p class="text-gray-700"><%= @analysis.summary %></p>
+            </div>
+            
+            <!-- Sentiment -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-medium mb-2"><%= t('company_reviews.analysis.sentiment') %></h3>
+              <div class="flex items-center">
+                <% case @analysis.sentiment %>
+                <% when 'positive' %>
+                  <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                  <span class="text-green-700 font-medium"><%= t('analysis.sentiment.positive') %></span>
+                <% when 'negative' %>
+                  <div class="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
+                  <span class="text-red-700 font-medium"><%= t('analysis.sentiment.negative') %></span>
+                <% else %>
+                  <div class="w-4 h-4 rounded-full bg-yellow-500 mr-2"></div>
+                  <span class="text-yellow-700 font-medium"><%= t('analysis.sentiment.neutral') %></span>
+                <% end %>
+              </div>
+              <div class="text-sm text-gray-500 mt-1"><%= t('company_reviews.analysis.based_on', count: @analysis.reviews_count) %></div>
+              <br>
+              <!-- Sentiment Breakdown -->
+              <h4 class="text-sm font-medium mb-2">Sentiment Breakdown</h4>
+              <div class="space-y-2">
+                <!-- Positive -->
+                <div class="flex items-center">
+                  <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                  <div class="text-sm mr-2">Positive</div>
+                  <div class="flex-grow bg-gray-200 rounded-full h-2">
+                    <div class="bg-green-500 h-2 rounded-full" style="width: <%= @positive_percentage %>%"></div>
+                  </div>
+                  <div class="text-sm ml-2"><%= @positive_count %> (<%= @positive_percentage %>%)</div>
+                </div>
+                
+                <!-- Neutral -->
+                <div class="flex items-center">
+                  <div class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
+                  <div class="text-sm mr-2">Neutral</div>
+                  <div class="flex-grow bg-gray-200 rounded-full h-2">
+                    <div class="bg-yellow-500 h-2 rounded-full" style="width: <%= @neutral_percentage %>%"></div>
+                  </div>
+                  <div class="text-sm ml-2"><%= @neutral_count %> (<%= @neutral_percentage %>%)</div>
+                </div>
+                
+                <!-- Negative -->
+                <div class="flex items-center">
+                  <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                  <div class="text-sm mr-2">Negative</div>
+                  <div class="flex-grow bg-gray-200 rounded-full h-2">
+                    <div class="bg-red-500 h-2 rounded-full" style="width: <%= @negative_percentage %>%"></div>
+                  </div>
+                  <div class="text-sm ml-2"><%= @negative_count %> (<%= @negative_percentage %>%)</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Key Insights -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-medium mb-2"><%= t('company_reviews.analysis.insights') %></h3>
+              <ul class="list-disc pl-5 space-y-1 text-gray-700">
+                <% @analysis.insights.each do |insight| %>
+                  <% cleaned_insight = insight.sub(/^Key Insights:?\s*/i, '').sub(/^Key Insights?\s*/i, '') %>
+                  <% unless cleaned_insight.blank? %>
+                    <li><%= cleaned_insight %></li>
+                  <% end %>
+                <% end %>
+              </ul>
+            </div>
+            
+            <!-- Recommendations -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-medium mb-2"><%= t('company_reviews.analysis.recommendations') %></h3>
+              <ul class="list-disc pl-5 space-y-1 text-gray-700">
+                <% @analysis.recommendations.each do |recommendation| %>
+                  <% cleaned_recommendation = recommendation.sub(/^Recommendations:?\s*/i, '').sub(/^Recommendation?\s*/i, '') %>
+                  <% unless cleaned_recommendation.blank? %>
+                    <li><%= cleaned_recommendation %></li>
+                  <% end %>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        <% else %>
+          <div id="no-analysis-message" class="py-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900"><%= t('company_reviews.analysis.no_analysis') %></h3>
+            <p class="mt-1 text-gray-500"><%= t('company_reviews.analysis.run_analysis') %></p>
+          </div>
+          
+          <!-- Analysis in progress (hidden by default) -->
+          <div id="analysis-in-progress" class="py-12 text-center hidden">
+            <h3 class="text-lg font-medium text-gray-900"><%= t('company_reviews.analysis.analyzing') %></h3>
+            <div class="mt-4 max-w-md mx-auto">
+              <div class="w-full bg-gray-200 rounded-full h-3">
+                <div id="main-progress-bar" class="bg-blue-600 h-3 rounded-full" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    
+    <!-- Reviews Content -->
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold mb-6"><%= t('company_reviews.all_reviews') %></h2>
+      
+      <% if @company_reviews.any? %>
+        <div class="space-y-6">
+          <% @company_reviews.each do |review| %>
+            <div class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="text-lg font-medium"><%= review.reviewer_name %></h3>
+                  <p class="text-sm text-gray-500"><%= review.reviewer_phone %></p>
+                </div>
+                <div class="flex items-center">
+                  <!-- Rating stars -->
+                  <div class="flex mr-3">
+                    <% review.rating.times do %>
+                      <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                      </svg>
+                    <% end %>
+                    <% (5 - review.rating).times do %>
+                      <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                      </svg>
+                    <% end %>
+                  </div>
+                  
+                  <!-- Sentiment badge -->
+                  <span class="inline-flex items-center rounded-full px-3 py-0.5 text-sm font-medium
+                    <%= review.sentiment == 'positive' ? 'bg-green-100 text-green-800' : 
+                       review.sentiment == 'negative' ? 'bg-red-100 text-red-800' : 
+                       review.sentiment == 'neutral' ? 'bg-yellow-100 text-yellow-800' : 
+                       'bg-gray-100 text-gray-800' %>">
+                    <%= review.sentiment.present? ? t("analysis.sentiment.#{review.sentiment}") : t('company_reviews.not_analyzed') %>
+                  </span>
+                </div>
+              </div>
+              <div class="mt-3">
+                <p class="text-gray-700"><%= review.content %></p>
+              </div>
+              <div class="mt-2 text-xs text-gray-500">
+                <%= l(review.created_at, format: :long) %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+        <!-- Pagination Controls -->
+        <div class="mt-8 flex justify-center">
+          <%= paginate @company_reviews %>
+        </div>
+      <% else %>
+        <div class="py-12 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 class="mt-2 text-lg font-medium text-gray-900"><%= t('company_reviews.no_reviews') %></h3>
+          <p class="mt-1 text-gray-500"><%= t('company_reviews.share_qr') %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,32 @@
+# == Schema Information
+#
+# Table name: company_reviews
+#
+#  id             :integer          not null, primary key
+#  company_id     :integer          not null
+#  reviewer_name  :string
+#  reviewer_phone :string
+#  content        :text
+#  sentiment      :string
+#  analyzed       :boolean          default("0")
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#
+
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  company: one
+  reviewer_name: MyString
+  reviewer_phone: MyString
+  content: MyText
+  sentiment: MyString
+  analyzed: false
+
+two:
+  company: two
+  reviewer_name: MyString
+  reviewer_phone: MyString
+  content: MyText
+  sentiment: MyString
+  analyzed: false

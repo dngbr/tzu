@@ -1,0 +1,98 @@
+<%= render 'shared/navbar' %>
+
+<div class="flex min-h-screen">
+  <!-- Sidebar Navigation -->
+  <div class="w-64 border-r border-gray-200 bg-white p-4">
+    <h2 class="mb-6 text-xl font-bold"><%= t('profile.sidebar.tools') %></h2>
+    
+    <div class="space-y-3">
+      <a href="<%= my_profile_path %>" class="block rounded bg-black text-white p-3 hover:bg-gray-800 transition">
+        <%= t('profile.sidebar.my_profile') %>
+      </a>
+      
+      <% if current_user.business_owner? %>
+        <a href="<%= my_company_path %>" class="block rounded bg-black text-white p-3 hover:bg-gray-800 transition">
+          <%= t('profile.sidebar.my_company') %>
+        </a>
+
+        <%= link_to t('profile.sidebar.my_reviews'), my_reviews_path, class: "block rounded bg-black text-white p-3 hover:bg-gray-800 transition" %>
+      <% end %>
+      
+      <%= link_to t('profile.sidebar.feedback_analyzer'), my_uploads_path, class: "block rounded bg-black text-white p-3 hover:bg-gray-800 transition" %>
+      
+      <a href="#" class="block rounded bg-black text-white p-3 hover:bg-gray-800 transition">
+        <%= t('profile.sidebar.excel_report') %>
+      </a>
+    </div>
+  </div>
+  
+  <!-- Main Content Area -->
+  <div class="flex-1 p-8">
+    <div class="mb-8 flex items-center justify-between">
+      <h1 class="text-2xl font-bold"><%= t('profile.welcome', email: @user.email) %></h1>
+      
+      <% if @user.business_owner? && @company.present? %>
+        <div class="text-sm text-gray-600">
+          Business: <%= @company.name %>
+        </div>
+      <% end %>
+    </div>
+    
+    <!-- Profile Content -->
+    <div id="profile-content" class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <% if @user.business_owner? %>
+        <% if @company.present? %>
+          <h2 class="mb-4 text-xl font-semibold"><%= t('profile.business.title') %></h2>
+          <div class="space-y-4">
+            <div>
+              <h3 class="text-sm font-medium text-gray-500"><%= t('profile.business.name') %></h3>
+              <p class="text-gray-900"><%= @company.name %></p>
+            </div>
+            
+            <div>
+              <h3 class="text-sm font-medium text-gray-500"><%= t('profile.business.description') %></h3>
+              <p class="text-gray-900"><%= @company.description %></p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <h3 class="text-sm font-medium text-gray-500"><%= t('profile.business.address') %></h3>
+                <p class="text-gray-900"><%= @company.address %></p>
+              </div>
+              
+              <div>
+                <h3 class="text-sm font-medium text-gray-500"><%= t('profile.business.phone') %></h3>
+                <p class="text-gray-900"><%= @company.phone %></p>
+              </div>
+            </div>
+            
+            <% if @company.website.present? %>
+              <div>
+                <h3 class="text-sm font-medium text-gray-500">Website</h3>
+                <p class="text-gray-900"><%= @company.website %></p>
+              </div>
+            <% end %>
+            
+            <div class="pt-4">
+              <%= link_to "Edit Business Profile", edit_company_path(@company), class: "rounded bg-black text-white px-4 py-2 hover:bg-gray-800 transition" %>
+            </div>
+          </div>
+        <% else %>
+          <div class="text-center py-8">
+            <h2 class="mb-2 text-xl font-semibold">You haven't created a business profile yet</h2>
+            <p class="mb-6 text-gray-600">As a business owner, you can create a profile for your company.</p>
+            <%= link_to "Create Business Profile", new_company_path, class: "rounded bg-black text-white px-4 py-2 hover:bg-gray-800 transition" %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="text-center py-8">
+          <h2 class="mb-2 text-xl font-semibold">Your Profile</h2>
+          <p class="mb-4 text-gray-600">Email: <%= @user.email %></p>
+          <p class="text-gray-600">Account type: Regular User</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%= render 'shared/footer' %>

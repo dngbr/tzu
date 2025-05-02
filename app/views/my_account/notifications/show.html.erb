@@ -1,0 +1,58 @@
+<div class="flex min-h-screen bg-gray-50">
+  <!-- Sidebar Navigation -->
+  <%= render 'shared/sidebar' %>
+  
+  <!-- Main Content Area -->
+  <div class="flex-1 p-8 overflow-y-auto">
+    <!-- Notification Header -->
+    <div class="relative h-64 mb-8 rounded-xl overflow-hidden">
+      <img src="<%= s3_image_url("photo.jpeg") %>" alt="Background" class="absolute inset-0 w-full h-full object-cover">
+      <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+      <div class="relative h-full flex flex-col justify-end p-8">
+        <h1 class="text-3xl font-bold text-white"><%= t('notifications.notification_details') %></h1>
+        <div class="flex items-center mt-2">
+          <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-500 mr-3">
+            <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </span>
+          <p class="text-white/80 text-sm"><%= time_ago_in_words(@notification.created_at) %> <%= t('notifications.ago') %></p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+      <div class="p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-2"><%= @notification.notification_title %></h2>
+          <p class="text-gray-700"><%= @notification.notification_body %></p>
+        </div>
+        
+        <% if @notification.data_hash.present? && !@notification.data_hash.empty? %>
+          <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+            <h3 class="text-sm font-medium text-gray-500 mb-3"><%= t('notifications.additional_details') %></h3>
+            
+
+            
+            <% @notification.data_hash.except('review_id').each do |key, value| %>
+              <div class="flex justify-between py-2 border-b border-gray-100 last:border-0">
+                <span class="text-sm text-gray-600"><%= key.humanize %></span>
+                <span class="text-sm font-medium text-gray-800"><%= value %></span>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+        
+        <!-- Actions -->
+        <div class="mt-8 flex justify-between border-t pt-6">
+          <%= link_to my_account_notifications_path, class: "px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg flex items-center transition" do %>
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <%= t('notifications.back_to_all_notifications') %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

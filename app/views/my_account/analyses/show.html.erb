@@ -1,0 +1,129 @@
+<%= render 'shared/navbar' %>
+
+<div class="flex min-h-screen">
+  <!-- Sidebar Navigation -->
+  <%= render 'shared/sidebar' %>
+  
+  <!-- Main Content Area -->
+  <div class="flex-1 p-8">
+    <div class="mb-6">
+      <%= link_to my_uploads_path, class: "inline-flex items-center text-gray-700 hover:text-black mb-4" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span><%= t('analysis.back') %></span>
+      <% end %>
+      
+      <h1 class="text-3xl font-bold"><%= t('analysis.title') %></h1>
+    </div>
+  
+  <div class="bg-white rounded-lg shadow p-6 mb-8">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-semibold"><%= @csv_upload.name %></h2>
+      <span class="text-sm text-gray-500"><%= t('analysis.uploaded_on', date: @csv_upload.created_at.strftime("%b %d, %Y")) %></span>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h3 class="text-lg font-medium mb-2"><%= t('analysis.overall_sentiment') %></h3>
+        <div class="flex items-center">
+          <% case @analysis.sentiment %>
+          <% when 'positive' %>
+            <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+            <span class="text-green-700 font-medium"><%= t('analysis.sentiment.positive') %></span>
+          <% when 'negative' %>
+            <div class="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
+            <span class="text-red-700 font-medium"><%= t('analysis.sentiment.negative') %></span>
+          <% else %>
+            <div class="w-4 h-4 rounded-full bg-yellow-500 mr-2"></div>
+            <span class="text-yellow-700 font-medium"><%= t('analysis.sentiment.neutral') %></span>
+          <% end %>
+        </div>
+      </div>
+      
+      <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h3 class="text-lg font-medium mb-2"><%= t('analysis.total_reviews') %></h3>
+        <p class="text-2xl font-bold"><%= @analysis.total_reviews %></p>
+      </div>
+      
+      <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h3 class="text-lg font-medium mb-2"><%= t('analysis.sentiment_breakdown') %></h3>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-green-700"><%= t('analysis.sentiment.positive') %></span>
+            <span class="text-gray-700 font-medium"><%= @analysis.positive_count %> (<%= @analysis.positive_percentage %>%)</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-green-500 h-2 rounded-full" style="width: <%= @analysis.positive_percentage %>%"></div>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <span class="text-red-700"><%= t('analysis.sentiment.negative') %></span>
+            <span class="text-gray-700 font-medium"><%= @analysis.negative_count %> (<%= @analysis.negative_percentage %>%)</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-red-500 h-2 rounded-full" style="width: <%= @analysis.negative_percentage %>%"></div>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <span class="text-yellow-700"><%= t('analysis.sentiment.neutral') %></span>
+            <span class="text-gray-700 font-medium"><%= @analysis.neutral_count %> (<%= @analysis.neutral_percentage %>%)</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-yellow-500 h-2 rounded-full" style="width: <%= @analysis.neutral_percentage %>%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div>
+        <h3 class="text-lg font-medium mb-4"><%= t('analysis.key_insights') %></h3>
+        <ul class="space-y-2 list-disc pl-5">
+          <% @analysis.insights.each do |insight| %>
+            <li class="text-gray-700"><%= dynamic_translate(insight) %></li>
+          <% end %>
+        </ul>
+      </div>
+      
+      <div>
+        <h3 class="text-lg font-medium mb-4"><%= t('analysis.summary') %></h3>
+        <p class="text-gray-700"><%= dynamic_translate(@analysis.summary) %></p>
+      </div>
+    </div>
+    
+    <div class="mb-8">
+      <h3 class="text-lg font-medium mb-4"><%= t('analysis.recommendations') %></h3>
+      <ul class="space-y-2 list-disc pl-5">
+        <% @analysis.recommendations.each do |recommendation| %>
+          <li class="text-gray-700"><%= dynamic_translate(recommendation) %></li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold mb-6"><%= t('analysis.review_samples') %></h2>
+    
+    <% if @reviews.any? %>
+      <div class="space-y-4">
+        <% @reviews.each do |review| %>
+          <div class="p-4 border border-gray-200 rounded-lg">
+            <p class="text-gray-700"><%= dynamic_translate(review.content) %></p>
+          </div>
+        <% end %>
+      </div>
+      
+      <div class="mt-6">
+        <%= paginate @reviews %>
+      </div>
+    <% else %>
+      <p class="text-gray-600 text-center py-8"><%= t('analysis.no_reviews') %></p>
+    <% end %>
+  </div>
+</div>
+
+  </div>
+</div>
+
+<%= render 'shared/footer' %>

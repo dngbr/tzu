@@ -1,0 +1,92 @@
+<%= render 'shared/navbar' %>
+
+<!-- Hero Section -->
+<section class="relative h-screen" style="margin-top: -1px;">
+  <!-- Full-width, full-height background image -->
+  <div class="absolute inset-0 w-full h-full" style="z-index: 1;">
+    <img src="<%= s3_image_url('hero.png') %>" alt="Hero Background" class="w-full h-full object-cover">
+    <!-- Dark overlay for better text readability -->
+    <div class="absolute inset-0 bg-black bg-opacity-10"></div>
+  </div>
+  
+  <!-- Content positioned on top of the image -->
+  <div class="relative z-10 h-full flex items-center" style="z-index: 10;">
+    <div class="max-w-5xl mx-auto px-6 py-12 text-center">
+      <div class="flex flex-wrap justify-between items-center mt-8">
+        <div class="flex-1 basis-80 text-left">
+          <h1 class="text-5xl font-bold mb-4 text-white"><%= t('home.hero.title') %></h1>
+        </div>
+        <div class="flex-1 basis-80 text-left pl-8">
+          <p class="mb-6 text-white text-lg"><%= t('home.hero.subtitle') %></p>
+          <div class="flex flex-wrap gap-4">
+            <a href="#" class="bg-white text-black px-6 py-3 rounded hover:bg-gray-200 transition font-medium"><%= t('home.hero.cta1') %></a>
+            <a href="<%= new_user_registration_path %>" class="bg-transparent text-white border border-white px-6 py-3 rounded hover:bg-white hover:bg-opacity-10 transition"><%= t('home.hero.cta2') %></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="bg-white py-12">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <div class="font-semibold text-gray-500"><%= t('home.features.innovate') %></div>
+      <h2 class="text-3xl font-bold mt-2"><%= t('home.features.title') %></h2>
+      <p class="text-gray-600 mt-2"><%= t('home.features.subtitle') %></p>
+    </div>
+    <div class="flex flex-wrap gap-8 justify-center">
+      <div class="bg-gray-50 border border-gray-200 rounded-lg flex-1 basis-64 max-w-sm p-6 text-left hover:shadow-md transition">
+        <img src="<%= s3_image_url('sentiments.png') %>" alt="Sentiment Analysis" class="w-full rounded-lg shadow-sm mb-4">
+        <div class="text-sm text-gray-500 font-semibold"><%= t('home.features.insights') %></div>
+        <h3 class="text-xl font-bold my-2"><%= t('home.features.feedback_title') %></h3>
+        <p class="mb-6 text-gray-600"><%= t('home.features.feedback_desc') %></p>
+        <a href="#" class="font-bold text-black hover:text-gray-700 no-underline"><%= t('home.features.cta1') %></a>
+      </div>
+      <div class="bg-gray-50 border border-gray-200 rounded-lg flex-1 basis-64 max-w-sm p-6 text-left hover:shadow-md transition">
+        <img src="<%= s3_image_url('appoinemnt.png') %>" alt="Appointment Chatbot" class="w-full rounded-lg shadow-sm mb-4">
+        <div class="text-sm text-gray-500 font-semibold"><%= t('home.features.connect') %></div>
+        <h3 class="text-xl font-bold my-2"><%= t('home.features.chatbot_title') %></h3>
+        <p class="mb-6 text-gray-600"><%= t('home.features.chatbot_desc') %></p>
+        <a href="<%= new_user_registration_path %>" class="font-bold text-black hover:text-gray-700 no-underline"><%= t('home.features.cta2') %></a>
+      </div>
+      <div class="bg-gray-50 border border-gray-200 rounded-lg flex-1 basis-64 max-w-sm p-6 text-left hover:shadow-md transition">
+        <img src="<%= s3_image_url('report.png') %>" alt="Excel Report Generator" class="w-full rounded-lg shadow-sm mb-4">
+        <div class="text-sm text-gray-500 font-semibold"><%= t('home.features.analyze') %></div>
+        <h3 class="text-xl font-bold my-2"><%= t('home.features.report_title') %></h3>
+        <p class="mb-6 text-gray-600"><%= t('home.features.report_desc') %></p>
+        <a href="#" class="font-bold text-black hover:text-gray-700 no-underline"><%= t('home.features.cta3') %></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- About Section -->
+<section class="bg-gray-50 py-16">
+  <br>
+  <div class="max-w-7xl mx-auto text-center px-6">
+    <h2 class="text-3xl font-bold mb-6"><%= t('home.about.title') %></h2>
+    <p class="text-gray-600 max-w-3xl mx-auto mb-10"><%= t('home.about.desc') %></p>
+  </div>
+</section>
+
+<!-- Free Trial Section -->
+<section class="bg-gray-50 py-12 my-8">
+  <div class="max-w-5xl mx-auto flex flex-wrap items-center px-6">
+    <div class="flex-1 basis-96 p-8">
+      <h2 class="text-3xl font-bold mb-4"><%= t('home.trial.title') %></h2>
+      <p class="text-gray-600 mb-6"><%= t('home.trial.subtitle') %></p>
+      <div class="flex flex-wrap gap-4">
+        <a href="<%= new_user_registration_path %>" class="bg-black text-white px-6 py-3 rounded hover:bg-gray-800 transition"><%= t('home.trial.signup') %></a>
+        <a href="#" class="bg-white text-black border border-gray-800 px-6 py-3 rounded hover:bg-gray-50 transition"><%= t('home.trial.request') %></a>
+      </div>
+    </div>
+    <div class="flex-1 basis-80 flex items-center justify-center">
+      <img src="<%= s3_image_url('start.png') %>" alt="Free Trial Image" class="w-full h-64 object-cover bg-gray-300 rounded-lg shadow-md">
+    </div>
+  </div>
+  <br>
+</section>
+
+<%= render 'shared/footer' %>

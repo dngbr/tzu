@@ -1,0 +1,245 @@
+# Files in the config/locales directory are used for internationalization and
+# are automatically loaded by Rails. If you want to use locales other than
+# English, add the necessary files in this directory.
+#
+# To use the locales, use `I18n.t`:
+#
+#     I18n.t "hello"
+#
+# In views, this is aliased to just `t`:
+#
+#     <%= t("hello") %>
+#
+# To use a different locale, set it with `I18n.locale`:
+#
+#     I18n.locale = :es
+#
+# This would use the information in config/locales/es.yml.
+#
+# To learn more about the API, please read the Rails Internationalization guide
+# at https://guides.rubyonrails.org/i18n.html.
+#
+# Be aware that YAML interprets the following case-insensitive strings as
+# booleans: `true`, `false`, `on`, `off`, `yes`, `no`. Therefore, these strings
+# must be quoted to be interpreted as strings. For example:
+#
+#     en:
+#       "yes": yup
+#       enabled: "ON"
+
+en:
+  hello: "Hello world"
+  profile:
+    sidebar:
+      tools: "AI Tools"
+      feedback_analyzer: "AI Feedback Analyzer"
+      my_csv_uploads: "CSV Uploads"
+      appointment_chatbot: "AI Appointment Chatbot"
+      excel_report: "AI Excel Report Generator"
+      my_profile: "Profile"
+      dashboard: "Dashboard"
+      my_company: "Company"
+      my_reviews: "Reviews"
+      notifications: "Notifications"
+      team: "Team"
+      logout: "Log Out"
+    navbar:
+      brand: "TZU"
+      profile: "Profile"
+      my_account: "My Account"
+      log_in: "Log In"
+      log_out: "Log Out"
+      sign_up: "Sign Up"
+    welcome: "Welcome, %{email}"
+    business:
+      title: "Your Business Profile"
+      name: "Business Name"
+      description: "Description"
+      address: "Address"
+      phone: "Phone"
+    my_profile_title: "My Profile"
+    my_profile_subtitle: "Manage your personal information and account settings"
+    personal_info: "Personal Information"
+    first_name: "First Name"
+    last_name: "Last Name"
+    email: "Email Address"
+    update_info: "Update Information"
+    change_password: "Change Password"
+    current_password: "Current Password"
+    new_password: "New Password"
+    confirm_password: "Confirm Password"
+    password_min_length: "Minimum %{count} characters"
+    update_password: "Update Password"
+    updated_successfully: "Profile updated successfully"
+    password_updated: "Password updated successfully"
+    change_avatar: "Change Profile Picture"
+    avatar_requirements: "JPG, PNG or GIF, max 5MB"
+    avatar_updated: "Profile picture updated successfully"
+  csv_uploads:
+    index:
+      title: "CSV Uploads"
+      upload_new: "Upload New CSV"
+      my_uploads_subtitle: "Upload and analyze customer feedback using AI to gain valuable insights and trends"
+      table:
+        name: "Name"
+        status: "Status"
+        date: "Date"
+        actions: "Actions"
+      status:
+        pending: "Pending"
+        processing: "Processing"
+        completed: "Completed"
+        failed: "Failed"
+      view: "View"
+      analysis: "Analysis"
+      empty_title: "No CSV Files Uploaded Yet"
+      empty_desc: "Upload a CSV file to analyze customer reviews using AI."
+  analysis:
+    title: "Analysis Results"
+    back_to_uploads: "Back to Uploads"
+    back: "Back"
+    uploaded_on: "Uploaded on %{date}"
+    overall_sentiment: "Overall Sentiment"
+    sentiment:
+      positive: "Positive"
+      negative: "Negative"
+      neutral: "Neutral"
+    total_reviews: "Total Reviews"
+    sentiment_breakdown: "Sentiment Breakdown"
+    key_insights: "Key Insights"
+    summary: "Summary"
+    recommendations: "Recommendations"
+    review_samples: "Review Samples"
+    no_reviews: "No individual reviews available."
+  company:
+    my_company_title: "My Company"
+    my_company_subtitle: "Manage your business information and settings"
+    edit_company: "Edit Company"
+    edit_company_title: "Edit Company Profile"
+    update_button: "Update Company"
+    brand_photo: "Brand Photo"
+    current_brand_photo: "Current brand photo"
+    brand_photo_help: "Upload a square image (200x200 to 1000x1000 pixels) that represents your brand. This will be displayed as your profile picture."
+    background_photo: "Background Photo"
+    background_photo_help: "Upload a wide image (1200x600 pixels) for your company header background."
+    current_background_photo: "Current background photo"
+    description_help: "Describe your business, services, and what makes you unique."
+    website_help: "Optional. Include http:// or https://"
+    no_language_preference: "No preference (use browser language)"
+    language_help: "Choose the default language for your review form."
+    description: "Description"
+    contact_info: "Contact Information"
+    address: "Address"
+    phone: "Phone"
+    website: "Website"
+    business_stats: "Business Statistics"
+    reviews_analyzed: "Reviews Analyzed"
+    uploads_completed: "Uploads Completed"
+    create_first: "Create your company profile to get started"
+  company_reviews:
+    leave_review: "Leave a Review"
+    your_feedback: "Your Feedback"
+    company_not_found: "Company not found"
+    no_company: "You need to create a company profile first"
+    business_owner_required: "Only business owners can access this page"
+    no_reviews: "No reviews yet"
+    title: "My Customer Reviews"
+    not_analyzed: "Not analyzed"
+    share_qr: "Share your QR code with customers to receive reviews"
+    scan_to_review: "Scan this QR code to leave a review"
+    qr_description: "Share this QR code with your customers to collect valuable feedback. They can scan it with their phone camera to access your review form."
+    copy_link: "Copy Link"
+    open_link: "Open Link"
+    review_details: "Review Details"
+    by: "By"
+    contact_info: "Contact Information"
+    back_to_all_reviews: "Back to all reviews"
+    back_to_home: "Back to home"
+    link_copied: "Link copied to clipboard!"
+    copy_failed: "Failed to copy link. Please try again."
+    all_reviews: "All Reviews"
+    analysis:
+      title: "Review Analysis"
+      analyze_button: "Analyze Reviews"
+      analyzing: "Analyzing..."
+      completed: "Analysis completed!"
+      last_analyzed: "Last analyzed: %{date}"
+      need_more_reviews: "You need more reviews to run a new analysis"
+      no_analysis: "No analysis yet"
+      run_analysis: "Run an analysis to get insights from your reviews"
+      summary: "Summary"
+      insights: "Key Insights"
+      recommendations: "Recommendations"
+      sentiment: "Overall Sentiment"
+      based_on: "Based on %{count} reviews"
+      success: "Analysis completed successfully!"
+      failed: "Failed to analyze reviews. Please try again."
+      not_allowed: "You need more reviews before running a new analysis."
+    thank_you:
+      title: "Thank You!"
+      message: "Your feedback for %{company} has been submitted successfully. We appreciate your time."
+    create:
+      success: "Thank you for your review!"
+    form:
+      name: "Your Name"
+      phone: "Phone Number"
+      rating: "Your Rating"
+      rating_with_help: "Your Rating"
+      review: "Your Review"
+      submit: "Submit Review"
+  notifications:
+    title: "My Notifications"
+    subtitle: "Stay updated with all your business activities"
+    all_notifications: "All Notifications"
+    no_notifications: "No notifications"
+    check_back_later: "Check back later for updates about your business"
+    mark_all_as_read: "Mark all as read"
+    view_all: "View all notifications"
+    notification_details: "Notification Details"
+    ago: "ago"
+    additional_details: "Additional Details"
+    related_review: "Related Review"
+    review_id: "Review ID"
+    view_review: "View Review"
+    view_details: "View Details"
+    back_to_all_notifications: "Back to all notifications"
+  footer:
+    about: "About Us"
+    contact: "Contact Us"
+    support: "Support Center"
+    blog: "Blog Posts"
+    careers: "Careers Page"
+    copyright: "Tzu Company. All rights reserved."
+    terms: "Terms of Use"
+    cookies: "Cookie Preferences"
+  home:
+    hero:
+      title: "Unlock the Power of AI for Your Business"
+      subtitle: "Discover how Tzu integrates AI to streamline your operations. From analyzing customer feedback to automating appointment bookings, our platform enhances efficiency and insights."
+      cta1: "Learn More"
+      cta2: "Sign Up"
+    features:
+      innovate: "Innovate"
+      title: "Transform Your Business Today"
+      subtitle: "Empower your decisions with AI-driven insights."
+      insights: "Insights"
+      feedback_title: "AI Feedback Analyzer: Understand Customer Sentiment"
+      feedback_desc: "Analyze feedback for actionable insights and trends."
+      cta1: "Learn More →"
+      connect: "Connect"
+      chatbot_title: "AI Appointment Chatbot: Effortless Scheduling"
+      chatbot_desc: "Book appointments seamlessly with our intelligent chatbot."
+      cta2: "Sign Up →"
+      analyze: "Analyze"
+      report_title: "AI Excel Report Generator: Data Made Simple"
+      report_desc: "Transform data into clear, concise reports effortlessly."
+      cta3: "Get Started →"
+    trial:
+      title: "Unlock Your Free Trial Today"
+      subtitle: "Experience the power of AI for your business. Sign up for a free trial now!"
+      signup: "Sign Up"
+      request: "Request"
+    about:
+      title: "Unlock the Power of AI to Transform Your Business Operations"
+      desc: "Tzu Company's AI solutions streamline processes, enhance customer interactions, and provide valuable insights. Experience increased efficiency and informed decision-making, empowering your business to thrive in a competitive landscape."
+

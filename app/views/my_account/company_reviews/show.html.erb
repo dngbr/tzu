@@ -1,0 +1,73 @@
+<div class="flex min-h-screen bg-gray-50">
+  <!-- Sidebar Navigation -->
+  <%= render 'shared/sidebar' %>
+  
+  <!-- Main Content Area -->
+  <div class="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+    <div class="max-w-2xl w-full bg-white rounded-lg shadow-md overflow-hidden">
+    <!-- Review Header -->
+    <div class="relative h-40 bg-gradient-to-r from-blue-500 to-purple-600 flex items-end">
+      <div class="absolute inset-0 opacity-20" style="background-image: url('<%= s3_image_url("photo.jpeg") %>'); background-size: cover; background-position: center;"></div>
+      <div class="relative p-6 text-white">
+        <h1 class="text-3xl font-bold"><%= t('company_reviews.review_details') %></h1>
+        <p class="text-white/80 mt-2"><%= @company_review.created_at.strftime("%B %d, %Y") %></p>
+      </div>
+    </div>
+    
+    <!-- Review Content -->
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-semibold"><%= @company.name %></h2>
+          <p class="text-gray-500"><%= t('company_reviews.by') %>: <%= @company_review.reviewer_name %></p>
+        </div>
+        <div class="flex items-center">
+          <div class="flex">
+            <% @company_review.rating.times do %>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+              </svg>
+            <% end %>
+            <% (5 - @company_review.rating).times do %>
+              <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+              </svg>
+            <% end %>
+          </div>
+          <span class="ml-2 text-gray-600 font-medium"><%= @company_review.rating %>/5</span>
+        </div>
+      </div>
+      
+      <div class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-100">
+        <p class="text-gray-700 whitespace-pre-line"><%= @company_review.content %></p>
+      </div>
+      
+      <% if @company_review.reviewer_phone.present? %>
+        <div class="mb-6">
+          <h3 class="text-sm font-medium text-gray-500 mb-1"><%= t('company_reviews.contact_info') %></h3>
+          <p class="text-gray-700"><%= @company_review.reviewer_phone %></p>
+        </div>
+      <% end %>
+      
+      <!-- Actions -->
+      <div class="mt-8 flex justify-between border-t pt-4">
+        <% if current_user&.business_owner? && current_user.company == @company %>
+          <%= link_to my_account_my_reviews_path, class: "text-gray-600 hover:text-gray-800 flex items-center" do %>
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <%= t('company_reviews.back_to_all_reviews') %>
+          <% end %>
+        <% else %>
+          <%= link_to root_path, class: "text-gray-600 hover:text-gray-800 flex items-center" do %>
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <%= t('company_reviews.back_to_home') %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

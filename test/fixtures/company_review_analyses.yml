@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  company: one
+  reviews_count: 1
+  summary: MyText
+  insights: MyText
+  recommendations: MyText
+  sentiment: MyString
+  last_analyzed_at: 2025-04-18 22:33:10
+
+two:
+  company: two
+  reviews_count: 1
+  summary: MyText
+  insights: MyText
+  recommendations: MyText
+  sentiment: MyString
+  last_analyzed_at: 2025-04-18 22:33:10

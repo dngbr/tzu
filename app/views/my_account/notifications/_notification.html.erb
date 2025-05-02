@@ -1,0 +1,36 @@
+<%
+  # Determine background color based on read status
+  bg_class = notification.read? ? 'bg-white' : 'bg-blue-50'
+%>
+
+<div class="<%= bg_class %> px-4 py-3 border-b hover:bg-gray-50"
+     data-controller="notification" 
+     data-notification-id="<%= notification.id %>"
+     data-action="click->notification#markAsRead">
+  
+  <div class="flex items-start">
+    <div class="flex-shrink-0">
+      <% if notification.read? %>
+        <span class="h-2 w-2 rounded-full bg-gray-300"></span>
+      <% else %>
+        <span class="h-2 w-2 rounded-full bg-red-500"></span>
+      <% end %>
+    </div>
+    
+    <div class="ml-3 w-0 flex-1">
+      <p class="text-sm font-medium text-gray-900">
+        <%= notification.notification_title %>
+      </p>
+      <p class="text-sm text-gray-500">
+        <%= notification.notification_body %>
+      </p>
+      <p class="mt-1 text-xs text-gray-500">
+        <%= time_ago_in_words(notification.created_at) %> ago
+      </p>
+      
+      <div class="mt-2">
+        <%= link_to t('notifications.view_details'), my_account_notification_path(notification), class: "text-xs text-blue-600 hover:text-blue-800" %>
+      </div>
+    </div>
+  </div>
+</div>
