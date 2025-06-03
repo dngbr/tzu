@@ -86,6 +86,6 @@ end
 
 gem "tailwindcss-rails", "~> 4.2"
 
-gem "aws-sdk-s3", "~> 1.183"
+gem "aws-sdk-s3", "~> 1.189"
 
 gem "image_processing", "~> 1.14"
