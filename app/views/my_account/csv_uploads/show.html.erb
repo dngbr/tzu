@@ -1,5 +1,3 @@
-<%= render 'shared/navbar' %>
-
 <div class="flex min-h-screen">
   <!-- Sidebar Navigation -->
   <%= render 'shared/sidebar' %>
@@ -7,7 +5,7 @@
   <!-- Main Content Area -->
   <div class="flex-1 p-8">
     <div class="mb-6">
-      <%= link_to my_uploads_path, class: "inline-flex items-center text-gray-700 hover:text-black mb-4" do %>
+      <%= link_to my_account_my_uploads_path, class: "inline-flex items-center text-gray-700 hover:text-black mb-4" do %>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
@@ -90,10 +88,6 @@
             </div>
           </div>
         </div>
-        
-        <div class="text-center">
-          <%= link_to "View Full Analysis", analysis_path(@csv_upload.analysis), class: "rounded bg-black text-white px-4 py-2 hover:bg-gray-800 transition" %>
-        </div>
       </div>
     <% elsif @csv_upload.status == CsvUpload::STATUSES[:processing] %>
       <div class="border-t border-gray-200 pt-6 text-center">
@@ -115,7 +109,7 @@
           <h3 class="text-lg font-medium mb-2">Processing Failed</h3>
           <p class="text-gray-600 mb-4">We encountered an error while processing your CSV file.</p>
           <p class="text-gray-500 text-sm mb-4">This could be due to an invalid file format or missing review data.</p>
-          <%= link_to "Try Uploading Again", new_csv_upload_path, class: "rounded bg-black text-white px-4 py-2 hover:bg-gray-800 transition" %>
+          <%= link_to "Try Uploading Again", new_my_account_csv_upload_path, class: "rounded bg-black text-white px-4 py-2 hover:bg-gray-800 transition" %>
         </div>
       </div>
     <% elsif @csv_upload.status == CsvUpload::STATUSES[:pending] %>
@@ -149,7 +143,7 @@
       <% if @csv_upload.reviews.count > 5 %>
         <div class="mt-6 text-center">
           <p class="text-gray-600 mb-4">Showing 5 of <%= @csv_upload.reviews.count %> reviews.</p>
-          <%= link_to "View Full Analysis", analysis_path(@csv_upload.analysis), class: "rounded bg-black text-white px-4 py-2 hover:bg-gray-800 transition" %>
+          <%= link_to "View Full Analysis", my_account_analysis_path(@csv_upload.analysis), class: "rounded bg-black text-white px-4 py-2 hover:bg-gray-800 transition" %>
         </div>
       <% end %>
     </div>

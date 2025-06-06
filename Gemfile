@@ -42,11 +42,13 @@ gem "sidekiq", "~> 6.5.8"
 # CSV parsing
 gem "csv"
 
+# Gems for text processing and analysis
+gem 'openai'
+gem 'ruby-openai'
+gem 'fuzzy_match', '~> 2.1'  # For text similarity and deduplication
+
 # HTTP client for API calls
 gem "faraday"
-
-# OpenAI API client
-gem "ruby-openai"
 
 # QR Code generation
 gem "rqrcode"

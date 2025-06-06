@@ -10,7 +10,23 @@
         <p class="text-gray-600 mt-2"><%= t('csv_uploads.index.my_uploads_subtitle') %></p>
       </div>
       <div>
-        <%= link_to t('csv_uploads.index.upload_new'), new_my_account_csv_upload_path, class: "rounded bg-black text-white px-4 py-2 hover:bg-gray-800 transition" %>
+        <button onclick="openUploadModal()" class="rounded bg-black text-white px-4 py-2 hover:bg-gray-800 transition">
+          <%= t('csv_uploads.index.upload_new') %>
+        </button>
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <div class="text-sm text-gray-500 mt-4">
+        <p><%= t('csv_uploads.index.feature_info') %></p>
+        <ul class="list-disc pl-5 mt-1 space-y-1">
+          <li><%= t('csv_uploads.index.feature_format') %></li>
+          <li><%= t('csv_uploads.index.feature_detect') %></li>
+          <li><%= t('csv_uploads.index.feature_analyze') %></li>
+          <li><%= t('csv_uploads.index.feature_insights') %></li>
+          <li><%= t('csv_uploads.index.feature_combine') %></li>
+        </ul>
+        <p class="mt-2"><%= t('csv_uploads.index.feature_reports') %></p>
       </div>
     </div>
     
@@ -65,5 +81,19 @@
         <p class="text-gray-600 mb-6"><%= t('csv_uploads.index.empty_desc') %></p>
       </div>
     <% end %>
-  </div>
+    </div>
 </div>
+
+<%= render 'my_account/csv_uploads/upload_modal' %>
+
+<script>
+  // Check if we should open the modal automatically
+  document.addEventListener('DOMContentLoaded', function() {
+    if (localStorage.getItem('openUploadModal') === 'true') {
+      // Clear the flag
+      localStorage.removeItem('openUploadModal');
+      // Open the modal
+      openUploadModal();
+    }
+  });
+</script>

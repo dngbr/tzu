@@ -48,11 +48,74 @@ class CompanyReviewAnalysis < ApplicationRecord
     analyzer = ReviewsAnalyzer.new(review_texts.join("\n\n"), language)
     response = analyzer.call
     
-    # Parse the response
-    content = response.dig("choices", 0, "message", "content")
+    # Get the parsed JSON from the response
+    parsed_json = response["parsed_json"]
     
-    # Extract data from the response
-    summary, insights, recommendations, sentiment = parse_analysis_response(content)
+    # Extract data from the parsed JSON response
+    if parsed_json.present?
+      # Use the structured JSON response
+      summary = parsed_json['summary']
+      insights = parsed_json['key_insights'] || parsed_json['insights'] || []
+      recommendations = parsed_json['recommendations'] || []
+      sentiment_value = parsed_json['sentiment']
+      sentiment_confidence = parsed_json['sentiment_confidence']
+      
+      # If we have categorized insights, store them for potential future use
+      categorized_insights = parsed_json['categorized_insights']
+    else
+      # Fallback to the old parsing method
+      content = response.dig("choices", 0, "message", "content")
+      summary, insights, recommendations, sentiment_value = parse_analysis_response(content)
+    end
+    
+    # Determine sentiment based on individual reviews
+    positive_count = 0
+    neutral_count = 0
+    negative_count = 0
+    
+    # First update individual reviews with their sentiment
+    reviews.each do |review|
+      # Determine sentiment based on rating
+      review_sentiment = if review.rating >= 4
+                         'positive'
+                       elsif review.rating <= 2
+                         'negative'
+                       else
+                         'neutral'
+                       end
+      
+      # Update the review
+      review.update(analyzed: true, sentiment: review_sentiment)
+      
+      # Count sentiments for overall analysis
+      case review_sentiment
+      when 'positive'
+        positive_count += 1
+      when 'neutral'
+        neutral_count += 1
+      when 'negative'
+        negative_count += 1
+      end
+    end
+    
+    # Determine overall sentiment
+    overall_sentiment = if parsed_json.present? && sentiment_value.present?
+                        # Use the sentiment from the parsed JSON if available
+                        case sentiment_value.to_s.downcase
+                        when 'positive'
+                          SENTIMENTS[:positive]
+                        when 'negative'
+                          SENTIMENTS[:negative]
+                        else
+                          SENTIMENTS[:neutral]
+                        end
+                      elsif positive_count > neutral_count && positive_count > negative_count
+                        SENTIMENTS[:positive]
+                      elsif negative_count > neutral_count && negative_count > positive_count
+                        SENTIMENTS[:negative]
+                      else
+                        SENTIMENTS[:neutral]
+                      end
     
     # Create a new analysis record
     analysis = company.company_review_analyses.create(
@@ -60,23 +123,9 @@ class CompanyReviewAnalysis < ApplicationRecord
       summary: summary,
       insights: insights,
       recommendations: recommendations,
-      sentiment: sentiment,
+      sentiment: overall_sentiment,
       last_analyzed_at: Time.current
     )
-    
-    # Mark all reviews as analyzed and set their sentiment
-    reviews.each do |review|
-      # Determine sentiment based on rating
-      review_sentiment = if review.rating >= 4
-                          'positive'
-                        elsif review.rating <= 2
-                          'negative'
-                        else
-                          'neutral'
-                        end
-      
-      review.update(analyzed: true, sentiment: review_sentiment)
-    end
     
     analysis
   end

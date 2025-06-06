@@ -33,18 +33,36 @@
           </div>
           <div>
             <p class="text-sm font-medium text-gray-600">Total Reviews</p>
-            <p class="text-2xl font-bold text-gray-900">128</p>
+            <p class="text-2xl font-bold text-gray-900"><%= @total_reviews %></p>
           </div>
         </div>
+        <% 
+          # Calculate month-over-month change if possible
+          this_month = Date.today.beginning_of_month
+          last_month = 1.month.ago.beginning_of_month
+          this_month_count = @company.company_reviews.where(created_at: this_month..this_month.end_of_month).count
+          last_month_count = @company.company_reviews.where(created_at: last_month..last_month.end_of_month).count
+          
+          if last_month_count > 0
+            change_percentage = ((this_month_count - last_month_count).to_f / last_month_count * 100).round(1)
+            change_class = change_percentage >= 0 ? "text-green-500" : "text-red-500"
+            change_icon = change_percentage >= 0 ? "M5 10l7-7m0 0l7 7m-7-7v18" : "M19 14l-7 7m0 0l-7-7m7 7V3"
+          end
+        %>
+        
         <div class="mt-4">
           <div class="flex items-center">
-            <span class="text-green-500 text-sm font-medium flex items-center">
-              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-              12.5%
-            </span>
-            <span class="text-gray-500 text-sm ml-2">vs last month</span>
+            <% if last_month_count > 0 %>
+              <span class="<%= change_class %> text-sm font-medium flex items-center">
+                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= change_icon %>" />
+                </svg>
+                <%= change_percentage.abs %>%
+              </span>
+              <span class="text-gray-500 text-sm ml-2">vs last month</span>
+            <% else %>
+              <span class="text-gray-500 text-sm">No data from last month</span>
+            <% end %>
           </div>
         </div>
       </div>
@@ -59,18 +77,37 @@
           </div>
           <div>
             <p class="text-sm font-medium text-gray-600">Average Rating</p>
-            <p class="text-2xl font-bold text-gray-900">4.7</p>
+            <p class="text-2xl font-bold text-gray-900"><%= @average_rating %></p>
           </div>
         </div>
+        <% 
+          # Calculate month-over-month change for average rating
+          this_month = Date.today.beginning_of_month
+          last_month = 1.month.ago.beginning_of_month
+          
+          this_month_avg = @company.company_reviews.where(created_at: this_month..this_month.end_of_month).average(:rating).to_f.round(1)
+          last_month_avg = @company.company_reviews.where(created_at: last_month..last_month.end_of_month).average(:rating).to_f.round(1)
+          
+          if last_month_avg > 0
+            rating_change = (this_month_avg - last_month_avg).round(1)
+            rating_class = rating_change >= 0 ? "text-green-500" : "text-red-500"
+            rating_icon = rating_change >= 0 ? "M5 10l7-7m0 0l7 7m-7-7v18" : "M19 14l-7 7m0 0l-7-7m7 7V3"
+          end
+        %>
+        
         <div class="mt-4">
           <div class="flex items-center">
-            <span class="text-green-500 text-sm font-medium flex items-center">
-              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-              0.3
-            </span>
-            <span class="text-gray-500 text-sm ml-2">vs last month</span>
+            <% if last_month_avg > 0 %>
+              <span class="<%= rating_class %> text-sm font-medium flex items-center">
+                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= rating_icon %>" />
+                </svg>
+                <%= rating_change.abs %>
+              </span>
+              <span class="text-gray-500 text-sm ml-2">vs last month</span>
+            <% else %>
+              <span class="text-gray-500 text-sm">No data from last month</span>
+            <% end %>
           </div>
         </div>
       </div>
@@ -85,23 +122,65 @@
           </div>
           <div>
             <p class="text-sm font-medium text-gray-600">Sentiment Score</p>
-            <p class="text-2xl font-bold text-gray-900">82%</p>
+            <% if @sentiment_score.present? %>
+              <p class="text-2xl font-bold text-gray-900"><%= @sentiment_score %>%</p>
+            <% else %>
+              <p class="text-2xl font-bold text-gray-900">--</p>
+              <p class="text-xs text-gray-500">No sentiment data available</p>
+            <% end %>
           </div>
         </div>
+        <% 
+          # Calculate month-over-month change for sentiment
+          if @sentiment_score.present?
+            this_month = Date.today.beginning_of_month
+            last_month = 1.month.ago.beginning_of_month
+            
+            # Calculate sentiment for this month
+            this_month_reviews = @company.company_reviews.where(created_at: this_month..this_month.end_of_month).where.not(sentiment: nil)
+            this_month_positive = this_month_reviews.where(sentiment: CompanyReview::SENTIMENTS[:positive]).count
+            this_month_neutral = this_month_reviews.where(sentiment: CompanyReview::SENTIMENTS[:neutral]).count
+            this_month_negative = this_month_reviews.where(sentiment: CompanyReview::SENTIMENTS[:negative]).count
+            this_month_total = this_month_positive + this_month_neutral + this_month_negative
+            
+            # Calculate sentiment for last month
+            last_month_reviews = @company.company_reviews.where(created_at: last_month..last_month.end_of_month).where.not(sentiment: nil)
+            last_month_positive = last_month_reviews.where(sentiment: CompanyReview::SENTIMENTS[:positive]).count
+            last_month_neutral = last_month_reviews.where(sentiment: CompanyReview::SENTIMENTS[:neutral]).count
+            last_month_negative = last_month_reviews.where(sentiment: CompanyReview::SENTIMENTS[:negative]).count
+            last_month_total = last_month_positive + last_month_neutral + last_month_negative
+            
+            # Calculate scores
+            this_month_sentiment = this_month_total > 0 ? (((this_month_positive * 100) + (this_month_neutral * 50)) / this_month_total).round : nil
+            last_month_sentiment = last_month_total > 0 ? (((last_month_positive * 100) + (last_month_neutral * 50)) / last_month_total).round : nil
+            
+            if this_month_sentiment.present? && last_month_sentiment.present? && last_month_sentiment > 0
+              sentiment_change = this_month_sentiment - last_month_sentiment
+              sentiment_change_pct = ((sentiment_change.to_f / last_month_sentiment) * 100).round(1)
+              sentiment_class = sentiment_change >= 0 ? "text-green-500" : "text-red-500"
+              sentiment_icon = sentiment_change >= 0 ? "M5 10l7-7m0 0l7 7m-7-7v18" : "M19 14l-7 7m0 0l-7-7m7 7V3"
+            end
+          end
+        %>
+        
         <div class="mt-4">
           <div class="flex items-center">
-            <span class="text-red-500 text-sm font-medium flex items-center">
-              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-              2.1%
-            </span>
-            <span class="text-gray-500 text-sm ml-2">vs last month</span>
+            <% if defined?(sentiment_change_pct) && sentiment_change_pct.present? %>
+              <span class="<%= sentiment_class %> text-sm font-medium flex items-center">
+                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= sentiment_icon %>" />
+                </svg>
+                <%= sentiment_change_pct.abs %>%
+              </span>
+              <span class="text-gray-500 text-sm ml-2">vs last month</span>
+            <% else %>
+              <span class="text-gray-500 text-sm">Insufficient data</span>
+            <% end %>
           </div>
         </div>
       </div>
       
-      <!-- Response Rate -->
+      <!-- Analysis Rate -->
       <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
         <div class="flex items-center">
           <div class="p-3 rounded-full bg-purple-100 mr-4">
@@ -110,19 +189,44 @@
             </svg>
           </div>
           <div>
-            <p class="text-sm font-medium text-gray-600">Response Rate</p>
-            <p class="text-2xl font-bold text-gray-900">95%</p>
+            <h3 class="text-lg font-medium leading-6 text-gray-900">Analysis Rate</h3>
+            <p class="text-2xl font-bold text-gray-900"><%= @analysis_rate %>%</p>
           </div>
         </div>
+        <% 
+          # Calculate month-over-month change for analysis rate
+          this_month = Date.today.beginning_of_month
+          last_month = 1.month.ago.beginning_of_month
+          
+          this_month_reviews = @company.company_reviews.where(created_at: this_month..this_month.end_of_month)
+          last_month_reviews = @company.company_reviews.where(created_at: last_month..last_month.end_of_month)
+          
+          this_month_analyzed = this_month_reviews.where(analyzed: true).count
+          last_month_analyzed = last_month_reviews.where(analyzed: true).count
+          
+          this_month_rate = this_month_reviews.count > 0 ? (this_month_analyzed.to_f / this_month_reviews.count * 100).round : 0
+          last_month_rate = last_month_reviews.count > 0 ? (last_month_analyzed.to_f / last_month_reviews.count * 100).round : 0
+          
+          if last_month_rate > 0
+            rate_change = this_month_rate - last_month_rate
+            rate_class = rate_change >= 0 ? "text-green-500" : "text-red-500"
+            rate_icon = rate_change >= 0 ? "M5 10l7-7m0 0l7 7m-7-7v18" : "M19 14l-7 7m0 0l-7-7m7 7V3"
+          end
+        %>
+        
         <div class="mt-4">
           <div class="flex items-center">
-            <span class="text-green-500 text-sm font-medium flex items-center">
-              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-              5.0%
-            </span>
-            <span class="text-gray-500 text-sm ml-2">vs last month</span>
+            <% if last_month_rate > 0 %>
+              <span class="<%= rate_class %> text-sm font-medium flex items-center">
+                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= rate_icon %>" />
+                </svg>
+                <%= rate_change.abs %>%
+              </span>
+              <span class="text-gray-500 text-sm ml-2">vs last month</span>
+            <% else %>
+              <span class="text-gray-500 text-sm">No data from last month</span>
+            <% end %>
           </div>
         </div>
       </div>
@@ -130,62 +234,124 @@
     
     <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <!-- Reviews Over Time Chart -->
+      <!-- Sentiment Distribution Pie Chart -->
       <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Reviews Over Time</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Sentiment Distribution</h3>
         
-        <!-- Mock Chart -->
-        <div class="h-64 relative">
-          <!-- Chart Background -->
-          <div class="absolute inset-0 flex items-end">
-            <% [25, 40, 30, 50, 60, 45, 75, 70, 85, 60, 75, 90].each_with_index do |value, index| %>
-              <div class="flex-1 mx-1">
-                <div class="bg-blue-500 rounded-t-sm" style="height: <%= value %>%;"></div>
+        <% 
+          # Get CompanyReview sentiment counts (QR code reviews only)
+          positive_count = @company.company_reviews.where(sentiment: CompanyReview::SENTIMENTS[:positive]).count
+          neutral_count = @company.company_reviews.where(sentiment: CompanyReview::SENTIMENTS[:neutral]).count
+          negative_count = @company.company_reviews.where(sentiment: CompanyReview::SENTIMENTS[:negative]).count
+          not_analyzed_count = @company.company_reviews.where(analyzed: false).count
+          
+          total = positive_count + neutral_count + negative_count + not_analyzed_count
+          total = total > 0 ? total : 1 # Avoid division by zero
+          
+          # Calculate percentages
+          positive_pct = (positive_count.to_f / total * 100).round
+          neutral_pct = (neutral_count.to_f / total * 100).round
+          negative_pct = (negative_count.to_f / total * 100).round
+          not_analyzed_pct = (not_analyzed_count.to_f / total * 100).round
+        %>
+        
+        <div class="text-sm text-gray-500 mb-3">
+          <span class="font-medium">Note:</span> This chart shows sentiment distribution for QR code reviews only (<%= total %> reviews).
+        </div>
+        
+        <!-- 3D Donut Chart with Side Legend -->
+        <div class="flex flex-col md:flex-row items-center justify-between mb-4">
+          <!-- 3D Donut Chart -->
+          <div class="relative w-56 h-56 group transition-all duration-300 hover:scale-105 mb-6 md:mb-0">
+            <!-- 3D effect base shadow -->
+            <div class="absolute rounded-full bg-gray-400 shadow-xl" style="inset: 5px -12px -12px 5px; filter: blur(10px); z-index: 0; transform: scale(0.95);"></div>
+            
+            <!-- Pie segments using conic-gradient with improved colors and shadow -->
+            <div class="absolute inset-0 rounded-full shadow-lg transform -rotate-12" style="background: conic-gradient(
+              #22c55e 0% <%= positive_pct %>%, 
+              #eab308 <%= positive_pct %>% <%= positive_pct + neutral_pct %>%, 
+              #ef4444 <%= positive_pct + neutral_pct %>% <%= positive_pct + neutral_pct + negative_pct %>%,
+              #9ca3af <%= positive_pct + neutral_pct + negative_pct %>% 100%
+            ); z-index: 1;"></div>
+            
+            <!-- Top highlight for 3D effect -->
+            <div class="absolute inset-0 rounded-full bg-gradient-to-br from-white via-transparent to-transparent opacity-30 transform -rotate-12" style="z-index: 2;"></div>
+            
+            <!-- Side highlight for 3D effect -->
+            <div class="absolute rounded-full bg-gradient-to-br from-transparent via-transparent to-black opacity-40 transform -rotate-12" style="inset: 0; z-index: 2;"></div>
+            
+            <!-- Center hole for donut chart with shadow -->
+            <div class="absolute rounded-full bg-white shadow-inner flex items-center justify-center text-center transform -rotate-12" style="inset: 28%; z-index: 3;">
+              <div class="transform rotate-12">
+                <div class="font-bold text-xl"><%= total %></div>
+                <div class="text-xs text-gray-500">Reviews</div>
               </div>
-            <% end %>
+            </div>
           </div>
           
-          <!-- Chart Grid Lines -->
-          <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
-            <% 5.times do |i| %>
-              <div class="border-b border-gray-200 relative h-0">
-                <span class="absolute -top-3 -left-6 text-xs text-gray-500"><%= 100 - i * 20 %></span>
+          <!-- Side Legend with hover effects -->
+          <div class="space-y-3 md:ml-8 w-full md:w-auto">
+            <div class="flex items-center p-2 rounded-lg transition-colors hover:bg-gray-50 shadow-sm">
+              <div class="w-5 h-5 bg-green-500 rounded-full mr-3"></div>
+              <div>
+                <span class="font-medium">Positive</span>
+                <div class="text-sm text-gray-500"><%= positive_count %> (<%= positive_pct %>%)</div>
               </div>
-            <% end %>
-            <div class="relative h-0">
-              <span class="absolute -top-3 -left-6 text-xs text-gray-500">0</span>
+            </div>
+            <div class="flex items-center p-2 rounded-lg transition-colors hover:bg-gray-50 shadow-sm">
+              <div class="w-5 h-5 bg-yellow-500 rounded-full mr-3"></div>
+              <div>
+                <span class="font-medium">Neutral</span>
+                <div class="text-sm text-gray-500"><%= neutral_count %> (<%= neutral_pct %>%)</div>
+              </div>
+            </div>
+            <div class="flex items-center p-2 rounded-lg transition-colors hover:bg-gray-50 shadow-sm">
+              <div class="w-5 h-5 bg-red-500 rounded-full mr-3"></div>
+              <div>
+                <span class="font-medium">Negative</span>
+                <div class="text-sm text-gray-500"><%= negative_count %> (<%= negative_pct %>%)</div>
+              </div>
+            </div>
+            <div class="flex items-center p-2 rounded-lg transition-colors hover:bg-gray-50 shadow-sm">
+              <div class="w-5 h-5 bg-gray-400 rounded-full mr-3"></div>
+              <div>
+                <span class="font-medium">Not Analyzed</span>
+                <div class="text-sm text-gray-500"><%= not_analyzed_count %> (<%= not_analyzed_pct %>%)</div>
+              </div>
             </div>
           </div>
         </div>
-        
-        <!-- X-Axis Labels -->
-        <div class="flex justify-between mt-2">
-          <% ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].each do |month| %>
-            <div class="text-xs text-gray-500"><%= month %></div>
-          <% end %>
-        </div>
       </div>
-      
       <!-- Rating Distribution Chart -->
       <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Rating Distribution</h3>
         
-        <!-- Mock Horizontal Bar Chart -->
+        <!-- Real Data Horizontal Bar Chart -->
         <div class="space-y-4">
-          <% [
-            { stars: 5, percentage: 75, count: 96 },
-            { stars: 4, percentage: 15, count: 19 },
-            { stars: 3, percentage: 5, count: 6 },
-            { stars: 2, percentage: 3, count: 4 },
-            { stars: 1, percentage: 2, count: 3 }
-          ].each do |rating| %>
+          <% 
+            # Calculate the total number of QR code reviews
+            company_reviews_count = @company_reviews_count
+          %>
+          
+          <div class="text-sm text-gray-500 mb-3">
+            <span class="font-medium">Note:</span> This chart shows rating distribution for QR code reviews only (<%= company_reviews_count %> reviews).
+          </div>
+          
+          <% (5.downto(1)).each do |stars| %>
+            <% 
+              data = @rating_distribution[stars]
+              count = data[:count]
+              
+              # Calculate percentage based on QR code reviews only
+              percentage = company_reviews_count > 0 ? (count.to_f / company_reviews_count * 100).round : 0
+            %>
             <div>
               <div class="flex items-center mb-1">
-                <div class="w-12 text-sm font-medium text-gray-700"><%= rating[:stars] %> stars</div>
+                <div class="w-12 text-sm font-medium text-gray-700"><%= stars %> stars</div>
                 <div class="flex-1 h-4 mx-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div class="h-full bg-yellow-400 rounded-full" style="width: <%= rating[:percentage] %>%;"></div>
+                  <div class="h-full bg-yellow-400 rounded-full" style="width: <%= percentage %>%;"></div>
                 </div>
-                <div class="w-12 text-sm text-gray-500 text-right"><%= rating[:count] %></div>
+                <div class="w-16 text-sm text-gray-500 text-right"><%= count %> (<%= percentage %>%)</div>
               </div>
             </div>
           <% end %>
@@ -193,49 +359,166 @@
       </div>
     </div>
     
+    <!-- All Reviews Summary Section -->
+    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-8">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">All Reviews Summary</h3>
+      
+      <% 
+        # Get counts for both types of reviews
+        qr_reviews_count = @company_reviews_count
+        csv_reviews_count = @reviews_count
+        total_reviews = @total_reviews
+        
+        # Get combined sentiment counts
+        # QR code reviews (CompanyReview)
+        qr_positive = @company.company_reviews.where(sentiment: CompanyReview::SENTIMENTS[:positive]).count
+        qr_neutral = @company.company_reviews.where(sentiment: CompanyReview::SENTIMENTS[:neutral]).count
+        qr_negative = @company.company_reviews.where(sentiment: CompanyReview::SENTIMENTS[:negative]).count
+        qr_not_analyzed = @company.company_reviews.where(analyzed: false).count
+        
+        # CSV upload reviews (Review)
+        csv_reviews = Review.joins(csv_upload: :user).where(csv_uploads: { user_id: current_user.id })
+        csv_positive = csv_reviews.where(sentiment: Review::SENTIMENTS[:positive]).count
+        csv_neutral = csv_reviews.where(sentiment: Review::SENTIMENTS[:neutral]).count
+        csv_negative = csv_reviews.where(sentiment: Review::SENTIMENTS[:negative]).count
+        
+        # Combined totals
+        total_positive = qr_positive + csv_positive
+        total_neutral = qr_neutral + csv_neutral
+        total_negative = qr_negative + csv_negative
+        total_not_analyzed = qr_not_analyzed
+        
+        # Calculate percentages for combined data
+        positive_percent = total_reviews > 0 ? (total_positive.to_f / total_reviews * 100).round : 0
+        neutral_percent = total_reviews > 0 ? (total_neutral.to_f / total_reviews * 100).round : 0
+        negative_percent = total_reviews > 0 ? (total_negative.to_f / total_reviews * 100).round : 0
+        not_analyzed_percent = total_reviews > 0 ? (total_not_analyzed.to_f / total_reviews * 100).round : 0
+      %>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Review Sources -->
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h4 class="font-medium text-gray-700 mb-3">Review Sources</h4>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                <span class="text-sm">QR Code Reviews</span>
+              </div>
+              <span class="text-sm font-medium"><%= qr_reviews_count %> (<%= (qr_reviews_count.to_f / total_reviews * 100).round %>%)</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                <span class="text-sm">CSV Upload Reviews</span>
+              </div>
+              <span class="text-sm font-medium"><%= csv_reviews_count %> (<%= (csv_reviews_count.to_f / total_reviews * 100).round %>%)</span>
+            </div>
+            <div class="h-1 bg-gray-200 w-full mt-2 mb-1"></div>
+            <div class="flex justify-between items-center font-medium">
+              <span class="text-sm">Total Reviews</span>
+              <span class="text-sm"><%= total_reviews %></span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Combined Sentiment Distribution -->
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h4 class="font-medium text-gray-700 mb-3">Combined Sentiment Distribution</h4>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                <span class="text-sm">Positive</span>
+              </div>
+              <span class="text-sm font-medium"><%= total_positive %> (<%= positive_percent %>%)</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                <span class="text-sm">Neutral</span>
+              </div>
+              <span class="text-sm font-medium"><%= total_neutral %> (<%= neutral_percent %>%)</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                <span class="text-sm">Negative</span>
+              </div>
+              <span class="text-sm font-medium"><%= total_negative %> (<%= negative_percent %>%)</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-gray-400 rounded-full mr-2"></div>
+                <span class="text-sm">Not Analyzed</span>
+              </div>
+              <span class="text-sm font-medium"><%= total_not_analyzed %> (<%= not_analyzed_percent %>%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Trends section removed as requested -->
+
+    
     <!-- Recent Activity and Insights -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Recent Reviews -->
       <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200 lg:col-span-2">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold text-gray-800">Recent Reviews</h3>
-          <a href="<%= my_account_my_reviews_path %>" class="text-sm text-blue-600 hover:text-blue-800">View all</a>
+          <%= link_to "View all", my_account_my_reviews_path, class: "text-sm text-blue-600 hover:text-blue-800" %>
         </div>
         
         <!-- Mock Reviews List -->
         <div class="space-y-4">
-          <% [
-            { name: "John D.", rating: 5, date: "2 days ago", content: "Excellent service! The staff was very professional and attentive to my needs." },
-            { name: "Sarah M.", rating: 4, date: "4 days ago", content: "Great experience overall. Would recommend to friends and family." },
-            { name: "Michael T.", rating: 5, date: "1 week ago", content: "Top notch quality and service. Will definitely be coming back." }
-          ].each do |review| %>
-            <div class="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
-              <div class="flex justify-between items-start">
-                <div>
-                  <div class="font-medium text-gray-800"><%= review[:name] %></div>
-                  <div class="flex items-center mt-1">
-                    <% review[:rating].times do %>
-                      <svg class="h-4 w-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                      </svg>
+          <% if @recent_reviews.any? %>
+            <% @recent_reviews.each do |review| %>
+              <div class="border-b border-gray-200 pb-4">
+                <div class="flex justify-between">
+                  <div>
+                    <div class="flex items-center">
+                      <div class="flex text-yellow-400">
+                        <% review.rating.times do %>
+                          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                          </svg>
+                        <% end %>
+                        <% (5 - review.rating).times do %>
+                          <svg class="h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                          </svg>
+                        <% end %>
+                      </div>
+                      <span class="ml-2 text-sm text-gray-600"><%= time_ago_in_words(review.created_at) %> ago</span>
+                    </div>
+                    <h4 class="font-medium text-gray-800 mt-1"><%= review.reviewer_name.present? ? review.reviewer_name : 'Anonymous' %></h4>
+                  </div>
+                  <div>
+                    <% if review.analyzed? %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Analyzed
+                      </span>
+                    <% else %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        Needs Analysis
+                      </span>
                     <% end %>
-                    <% (5 - review[:rating]).times do %>
-                      <svg class="h-4 w-4 text-gray-300 fill-current" viewBox="0 0 20 20">
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-                      </svg>
-                    <% end %>
-                    <span class="ml-2 text-sm text-gray-500"><%= review[:date] %></span>
                   </div>
                 </div>
-                <div class="flex space-x-2">
-                  <button class="text-gray-400 hover:text-blue-500">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                  </button>
-                </div>
+                <p class="mt-2 text-gray-600"><%= review.content %></p>
+                <% if review.analyzed? %>
+                  <div class="mt-3 bg-gray-50 p-3 rounded-md">
+                    <p class="text-sm text-gray-600 italic">This review has been analyzed. Sentiment: <%= review.sentiment || 'Not determined' %></p>
+                    <p class="text-xs text-gray-500 mt-1">Analyzed <%= time_ago_in_words(review.updated_at) %> ago</p>
+                  </div>
+                <% end %>
               </div>
-              <p class="mt-2 text-gray-600 text-sm"><%= review[:content] %></p>
+            <% end %>
+          <% else %>
+            <div class="text-center py-6">
+              <p class="text-gray-500">No reviews yet. As you receive reviews, they'll appear here.</p>
             </div>
           <% end %>
         </div>
@@ -268,7 +551,7 @@
                 </svg>
               </div>
               <div class="ml-3">
-                <p class="text-sm font-medium text-green-800">Your response time has improved by 15% this month</p>
+                <p class="text-sm font-medium text-green-800">Your review analysis rate has improved this month</p>
               </div>
             </div>
           </div>
@@ -300,3 +583,36 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Rating trend chart tooltips
+    const tooltip = document.getElementById('rating-tooltip');
+    const tooltipRating = document.getElementById('tooltip-rating');
+    const tooltipCount = document.getElementById('tooltip-count');
+    
+    if (tooltip && tooltipRating && tooltipCount) {
+      const dataPoints = document.querySelectorAll('.data-point-tooltip');
+      
+      dataPoints.forEach(point => {
+        point.addEventListener('mouseenter', function(e) {
+          const rating = this.getAttribute('data-rating');
+          const count = this.getAttribute('data-count');
+          
+          tooltipRating.textContent = rating;
+          tooltipCount.textContent = count;
+          
+          // Position the tooltip
+          const rect = this.getBoundingClientRect();
+          tooltip.style.left = `${rect.left}px`;
+          tooltip.style.top = `${rect.top - 50}px`;
+          tooltip.classList.remove('hidden');
+        });
+        
+        point.addEventListener('mouseleave', function() {
+          tooltip.classList.add('hidden');
+        });
+      });
+    }
+  });
+</script>

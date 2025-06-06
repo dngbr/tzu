@@ -1,7 +1,6 @@
-require 'csv'
 require_relative '../services/reviews_analyzer'
 
-class CsvProcessingJob
+class JsonProcessingJob
   include Sidekiq::Job
 
   def perform(csv_upload_id)
@@ -11,7 +10,7 @@ class CsvProcessingJob
     begin
       csv_upload.update(status: CsvUpload::STATUSES[:processing])
 
-      reviews, ratings = process_csv(csv_upload)
+      reviews, ratings = process_json(csv_upload)
       reviews_text = reviews.join("\n\n")
 
       analyzer = ReviewsAnalyzer.new(reviews_text)
@@ -74,7 +73,7 @@ class CsvProcessingJob
 
       csv_upload.update(status: CsvUpload::STATUSES[:completed])
     rescue => e
-      Rails.logger.error("Error processing CSV #{csv_upload_id}: #{e.message}")
+      Rails.logger.error("Error processing JSON file #{csv_upload_id}: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
       csv_upload.update(status: CsvUpload::STATUSES[:failed])
     end
@@ -82,40 +81,79 @@ class CsvProcessingJob
 
   private
 
-  def process_csv(csv_upload)
+  def process_json(csv_upload)
     reviews = []
     ratings = []
 
-    csv_file = csv_upload.file.download
-    CSV.parse(csv_file, headers: true) do |row|
-      review_text = nil
-      rating = nil
-      ['review', 'comment', 'feedback', 'text', 'content'].each do |column_name|
-        if row[column_name].present?
-          review_text = row[column_name]
-          break
+    json_content = csv_upload.file.download
+    data = JSON.parse(json_content)
+
+    # Handle different JSON structures
+    if data.is_a?(Array)
+      # Array of reviews
+      data.each do |item|
+        review_text = extract_review_text_from_json(item)
+        rating = extract_rating_from_json(item)
+        
+        if review_text.present?
+          reviews << review_text
+          ratings << rating if rating.present?
         end
       end
-      ['rating', 'score', 'stars', 'grade'].each do |column_name|
-        if row[column_name].present?
-          rating = row[column_name].to_i
-          break
+    elsif data.is_a?(Hash) && data['reviews'].is_a?(Array)
+      # Object with reviews array
+      data['reviews'].each do |item|
+        review_text = extract_review_text_from_json(item)
+        rating = extract_rating_from_json(item)
+        
+        if review_text.present?
+          reviews << review_text
+          ratings << rating if rating.present?
         end
       end
-      if review_text.nil?
-        row.each do |header, value|
-          if value.present?
-            review_text = value
-            break
-          end
-        end
-      end
+    elsif data.is_a?(Hash)
+      # Single review object
+      review_text = extract_review_text_from_json(data)
+      rating = extract_rating_from_json(data)
+      
       if review_text.present?
         reviews << review_text
         ratings << rating if rating.present?
       end
     end
+
     [reviews, ratings]
+  end
+
+  def extract_review_text_from_json(item)
+    # Try common field names for review text
+    ['review', 'comment', 'feedback', 'text', 'content', 'description', 'message'].each do |field|
+      return item[field] if item[field].present?
+    end
+
+    # If no standard field found, look for the longest string field
+    longest_text = nil
+    longest_length = 0
+    
+    item.each do |key, value|
+      if value.is_a?(String) && value.length > longest_length
+        longest_text = value
+        longest_length = value.length
+      end
+    end
+    
+    longest_text
+  end
+
+  def extract_rating_from_json(item)
+    # Try common field names for ratings
+    ['rating', 'score', 'stars', 'grade'].each do |field|
+      if item[field].present?
+        rating = item[field].to_i
+        return rating if rating.between?(1, 5)
+      end
+    end
+    nil
   end
 
   # Extraction helpers for OpenAI response
@@ -167,7 +205,6 @@ class CsvProcessingJob
       "neutral"
     end
   end
-
 
   def analyze_sentiment_from_ratings(ratings)
     positive_count = 0

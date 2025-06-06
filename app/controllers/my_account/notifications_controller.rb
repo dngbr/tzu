@@ -23,6 +23,17 @@ module MyAccount
       end
     end
     
+    def mark_all_as_read
+      @company.notifications.unread.each do |notification|
+        notification.mark_as_read!
+      end
+      
+      respond_to do |format|
+        format.json { head :no_content }
+        format.html { redirect_to my_account_notifications_path }
+      end
+    end
+    
     private
     
     def set_company

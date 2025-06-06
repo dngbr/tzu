@@ -1,7 +1,6 @@
-require 'csv'
 require_relative '../services/reviews_analyzer'
 
-class CsvProcessingJob
+class TextProcessingJob
   include Sidekiq::Job
 
   def perform(csv_upload_id)
@@ -11,7 +10,7 @@ class CsvProcessingJob
     begin
       csv_upload.update(status: CsvUpload::STATUSES[:processing])
 
-      reviews, ratings = process_csv(csv_upload)
+      reviews, ratings = process_text(csv_upload)
       reviews_text = reviews.join("\n\n")
 
       analyzer = ReviewsAnalyzer.new(reviews_text)
@@ -47,11 +46,7 @@ class CsvProcessingJob
         sentiment = extract_overall_sentiment(analysis_response)
       end
 
-      if ratings.present? && ratings.length == reviews.length
-        sentiment_counts = analyze_sentiment_from_ratings(ratings)
-      else
-        sentiment_counts = analyze_sentiment_from_reviews(reviews, sentiment)
-      end
+      sentiment_counts = analyze_sentiment_from_reviews(reviews, sentiment)
 
       # Create Analysis record
       analysis = csv_upload.create_analysis!(
@@ -74,7 +69,7 @@ class CsvProcessingJob
 
       csv_upload.update(status: CsvUpload::STATUSES[:completed])
     rescue => e
-      Rails.logger.error("Error processing CSV #{csv_upload_id}: #{e.message}")
+      Rails.logger.error("Error processing Text file #{csv_upload_id}: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
       csv_upload.update(status: CsvUpload::STATUSES[:failed])
     end
@@ -82,39 +77,32 @@ class CsvProcessingJob
 
   private
 
-  def process_csv(csv_upload)
+  def process_text(csv_upload)
+    text_content = csv_upload.file.download
     reviews = []
     ratings = []
 
-    csv_file = csv_upload.file.download
-    CSV.parse(csv_file, headers: true) do |row|
-      review_text = nil
-      rating = nil
-      ['review', 'comment', 'feedback', 'text', 'content'].each do |column_name|
-        if row[column_name].present?
-          review_text = row[column_name]
-          break
-        end
-      end
-      ['rating', 'score', 'stars', 'grade'].each do |column_name|
-        if row[column_name].present?
-          rating = row[column_name].to_i
-          break
-        end
-      end
-      if review_text.nil?
-        row.each do |header, value|
-          if value.present?
-            review_text = value
-            break
-          end
-        end
-      end
-      if review_text.present?
-        reviews << review_text
-        ratings << rating if rating.present?
+    # Try to determine the delimiter (newline, double newline, or custom separator)
+    if text_content.include?("\n\n")
+      # Double newline separator
+      reviews = text_content.split("\n\n").map(&:strip).reject(&:empty?)
+    elsif text_content.include?("---")
+      # Custom separator
+      reviews = text_content.split("---").map(&:strip).reject(&:empty?)
+    else
+      # Single newline separator
+      reviews = text_content.split("\n").map(&:strip).reject(&:empty?)
+    end
+
+    # Look for ratings in the text (e.g., "Rating: 4" or "4/5 stars")
+    reviews.each do |review|
+      rating_match = review.match(/rating:\s*(\d+)|(\d+)\s*\/\s*[5|10]|(\d+)\s*stars?/i)
+      if rating_match
+        rating = rating_match.captures.compact.first.to_i
+        ratings << rating if rating.between?(1, 5)
       end
     end
+
     [reviews, ratings]
   end
 
@@ -166,23 +154,6 @@ class CsvProcessingJob
     else
       "neutral"
     end
-  end
-
-
-  def analyze_sentiment_from_ratings(ratings)
-    positive_count = 0
-    negative_count = 0
-    neutral_count = 0
-    ratings.each do |rating|
-      if rating >= 4
-        positive_count += 1
-      elsif rating <= 2
-        negative_count += 1
-      else
-        neutral_count += 1
-      end
-    end
-    { positive: positive_count, negative: negative_count, neutral: neutral_count }
   end
 
   def analyze_sentiment_from_reviews(reviews, overall_sentiment)

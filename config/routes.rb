@@ -45,7 +45,9 @@ Rails.application.routes.draw do
     # Notifications
     resources :notifications, only: [:index, :show] do
       post :mark_as_read, on: :member
-
+      collection do
+        post :mark_all_as_read
+      end
     end
     
     # Profile management

@@ -70,7 +70,7 @@
               
               <div class="dropdown-divider border-t"></div>
               <div class="px-4 py-2 text-xs text-center">
-                <%= link_to t('notifications.view_all'), my_account_notifications_path, class: "text-blue-500 hover:text-blue-700" %>
+                <%= button_to t('notifications.view_all'), mark_all_as_read_my_account_notifications_path, method: :post, class: "text-blue-500 hover:text-blue-700 bg-transparent border-0 p-0 cursor-pointer" %>
               </div>
             </div>
           </div>
@@ -194,34 +194,36 @@
     <div class="space-y-3">
       
       <% if current_user.business_owner? %>
+        <!-- Dashboard -->  
         <a href="<%= my_account_root_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'dashboard' && current_action == 'index') ? active_class : inactive_class %>">
           <%= t('profile.sidebar.dashboard') %>
         </a>
         
-        <a href="<%= my_account_my_company_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'companies' && current_action == 'my_company') ? active_class : inactive_class %>">
-          <%= t('profile.sidebar.my_company') %>
-        </a>
-        
+        <!-- Reviews -->  
         <a href="<%= my_account_my_reviews_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'company_reviews' && current_action == 'index') ? active_class : inactive_class %>">
           <%= t('profile.sidebar.my_reviews') %>
         </a>
         
+        <!-- CSV Uploads -->  
+        <a href="<%= my_account_my_uploads_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'csv_uploads' && current_action == 'my_uploads') ? active_class : inactive_class %>">
+          <%= t('profile.sidebar.my_csv_uploads') %>
+        </a>
+        
+        <!-- Notifications -->  
         <a href="<%= my_account_notifications_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'notifications') ? active_class : inactive_class %>">
           <%= t('profile.sidebar.notifications') %>
         </a>
         
+        <!-- Team -->  
         <a href="#" class="<%= inactive_class %>">
           <%= t('profile.sidebar.team') %>
         </a>
+        
+        <!-- Company -->  
+        <a href="<%= my_account_my_company_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'companies' && current_action == 'my_company') ? active_class : inactive_class %>">
+          <%= t('profile.sidebar.my_company') %>
+        </a>
       <% end %>
-      
-      <a href="<%= my_account_my_uploads_path %>" class="<%= (controller.class.module_parent.to_s == 'MyAccount' && current_controller == 'csv_uploads' && current_action == 'my_uploads') ? active_class : inactive_class %>">
-        <%= t('profile.sidebar.my_csv_uploads') %>
-      </a>
-      
-      <a href="#" class="<%= inactive_class %>">
-        <%= t('profile.sidebar.excel_report') %>
-      </a>
     </div>
     
     <!-- Add padding at the bottom to make space for the logout button -->

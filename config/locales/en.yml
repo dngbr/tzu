@@ -33,7 +33,7 @@ en:
     sidebar:
       tools: "AI Tools"
       feedback_analyzer: "AI Feedback Analyzer"
-      my_csv_uploads: "CSV Uploads"
+      my_csv_uploads: "Bulk Reviews Upload"
       appointment_chatbot: "AI Appointment Chatbot"
       excel_report: "AI Excel Report Generator"
       my_profile: "Profile"
@@ -77,8 +77,8 @@ en:
     avatar_updated: "Profile picture updated successfully"
   csv_uploads:
     index:
-      title: "CSV Uploads"
-      upload_new: "Upload New CSV"
+      title: "Uploaded Review Files"
+      upload_new: "Upload New File"
       my_uploads_subtitle: "Upload and analyze customer feedback using AI to gain valuable insights and trends"
       table:
         name: "Name"
@@ -92,8 +92,24 @@ en:
         failed: "Failed"
       view: "View"
       analysis: "Analysis"
-      empty_title: "No CSV Files Uploaded Yet"
-      empty_desc: "Upload a CSV file to analyze customer reviews using AI."
+      empty_title: "No Files Uploaded Yet"
+      empty_desc: "Upload a file to analyze customer reviews using AI."
+      feature_info: "This feature allows you to upload files containing multiple customer reviews for sentiment analysis. The system will:"
+      feature_format: "Process various file formats (CSV, Excel, Text, JSON)"
+      feature_detect: "Automatically detect review content and optional ratings"
+      feature_analyze: "Analyze sentiment for each review"
+      feature_insights: "Generate insights and recommendations based on the reviews"
+      feature_combine: "Combine these reviews with your QR code submissions in the dashboard"
+      feature_reports: "After uploading, you can view detailed analysis reports for each batch of reviews."
+    upload_modal:
+      title: "Upload Review File for Analysis"
+      name_label: "Upload Name"
+      name_placeholder: "E.g., Customer Reviews Q1 2025"
+      name_help: "Give your upload a descriptive name to help you identify it later."
+      file_label: "File"
+      file_help: "Upload a file containing customer reviews. Supported formats: CSV, Excel (.xlsx, .xls), Text (.txt), JSON (.json). The file should have a header row and at least one column with review text."
+      submit: "Upload and Analyze"
+      cancel: "Cancel"
   analysis:
     title: "Analysis Results"
     back_to_uploads: "Back to Uploads"

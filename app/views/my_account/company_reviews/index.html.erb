@@ -21,8 +21,16 @@
           <% if @can_analyze %>
             <div id="analysis-controls">
               <button id="analyze-button" type="button" class="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-700 transition">
-                <span id="button-text"><%= t('company_reviews.analysis.analyze_button') %></span>
+                <%= t('company_reviews.analysis.analyze_button') %>
               </button>
+            </div>
+            
+            <!-- Analysis progress (hidden by default) -->
+            <div id="analysis-progress" class="hidden">
+              <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                <div id="progress-bar" class="bg-blue-600 h-3 rounded-full" style="width: 0%"></div>
+              </div>
+              <p id="progress-status" class="text-sm text-gray-600"><%= t('company_reviews.analysis.analyzing') %></p>
             </div>
           <% else %>
             <div class="text-sm text-gray-500">
@@ -38,36 +46,31 @@
         <script>
           document.addEventListener('DOMContentLoaded', function() {
             const analyzeButton = document.getElementById('analyze-button');
-            const spinner = document.getElementById('spinner');
-            const buttonText = document.getElementById('button-text');
-            const progressContainer = document.getElementById('progress-container');
+            const analysisControls = document.getElementById('analysis-controls');
+            const analysisProgress = document.getElementById('analysis-progress');
             const progressBar = document.getElementById('progress-bar');
-            const statusText = document.getElementById('status-text');
+            const progressStatus = document.getElementById('progress-status');
             
-            // Store the job ID
+            // Store the job ID and polling interval
             let currentJobId = null;
-            // Store the polling interval ID
             let pollingInterval = null;
-            // Progress counter for animation
-            let progressCounter = 0;
             
+            // Handle analyze button click
             analyzeButton.addEventListener('click', function() {
-              // Hide the analyze button
-              const analysisControls = document.getElementById('analysis-controls');
-              if (analysisControls) {
-                analysisControls.classList.add('hidden');
-              }
+              // Show progress bar, hide controls
+              analysisControls.classList.add('hidden');
+              analysisProgress.classList.remove('hidden');
               
-              // Hide the "No analysis yet" message and show the loading bar
-              const noAnalysisMessage = document.getElementById('no-analysis-message');
-              const analysisInProgress = document.getElementById('analysis-in-progress');
+              // Reset progress bar
+              progressBar.style.width = '10%';
+              progressStatus.textContent = '<%= t("company_reviews.analysis.analyzing") %>';
               
-              if (noAnalysisMessage && analysisInProgress) {
-                noAnalysisMessage.classList.add('hidden');
-                analysisInProgress.classList.remove('hidden');
-              }
-              
-              // Make the request to start analysis
+              // Start analysis
+              startAnalysis();
+            });
+            
+            // Start the analysis process
+            function startAnalysis() {
               fetch('<%= my_account_analyze_reviews_path %>', {
                 method: 'POST',
                 headers: {
@@ -80,36 +83,30 @@
               .then(data => {
                 if (data.job_id) {
                   currentJobId = data.job_id;
-                  
-                  // Start polling for job status
                   startPolling();
                 } else {
-                  // Handle error
                   showError(data.error || 'Failed to start analysis');
                 }
               })
               .catch(error => {
-                console.error('Error:', error);
+                console.error('Error starting analysis:', error);
                 showError('An error occurred while starting the analysis');
               });
-            });
+            }
             
+            // Poll for job status
             function startPolling() {
               // Clear any existing polling
               if (pollingInterval) clearInterval(pollingInterval);
-              
-              // Start the progress animation
-              progressCounter = 10; // Start at 10%
-              updateProgress();
               
               // Poll every 2 seconds
               pollingInterval = setInterval(checkJobStatus, 2000);
             }
             
+            // Check the status of the analysis job
             function checkJobStatus() {
               if (!currentJobId) return;
               
-              // Properly construct the URL with job_id parameter
               const url = new URL('<%= my_account_check_analysis_status_path %>', window.location.origin);
               url.searchParams.append('job_id', currentJobId);
               
@@ -123,31 +120,7 @@
               })
               .then(response => response.json())
               .then(data => {
-                // Update progress animation based on status
-                if (data.status === 'processing') {
-                  // Increment progress counter for animation
-                  progressCounter = Math.min(progressCounter + 5, 90);
-                  updateProgress();
-                  statusText.innerText = '<%= t("company_reviews.analysis.analyzing") %>';
-                } else if (data.completed) {
-                  // Job is completed or failed
-                  clearInterval(pollingInterval);
-                  
-                  if (data.status === 'completed') {
-                    // Success - set progress to 100%
-                    progressCounter = 100;
-                    updateProgress();
-                    statusText.innerText = '<%= t("company_reviews.analysis.completed") %>';
-                    
-                    // Redirect after a short delay to show the completed state
-                    setTimeout(function() {
-                      window.location.reload();
-                    }, 1000);
-                  } else {
-                    // Failed
-                    showError(data.error || 'Analysis failed');
-                  }
-                }
+                updateProgressUI(data);
               })
               .catch(error => {
                 console.error('Error checking job status:', error);
@@ -155,35 +128,40 @@
               });
             }
             
-            function updateProgress() {
-              // Update the main progress bar
-              const mainProgressBar = document.getElementById('main-progress-bar');
-              if (mainProgressBar) {
-                mainProgressBar.style.width = `${progressCounter}%`;
+            // Update the progress UI based on job status
+            function updateProgressUI(data) {
+              if (data.status === 'processing') {
+                // Increment progress (max 90% until complete)
+                const currentWidth = parseInt(progressBar.style.width) || 10;
+                const newWidth = Math.min(currentWidth + 5, 90);
+                progressBar.style.width = `${newWidth}%`;
+              } else if (data.completed) {
+                clearInterval(pollingInterval);
+                
+                if (data.status === 'completed') {
+                  // Success - set progress to 100%
+                  progressBar.style.width = '100%';
+                  progressStatus.textContent = '<%= t("company_reviews.analysis.completed") %>';
+                  
+                  // Redirect after a short delay
+                  setTimeout(function() {
+                    window.location.reload();
+                  }, 1000);
+                } else {
+                  // Failed
+                  showError(data.error || 'Analysis failed');
+                }
               }
             }
             
+            // Show error and reset UI
             function showError(message) {
               // Stop polling
               if (pollingInterval) clearInterval(pollingInterval);
               
-              // Show the analyze button again
-              const analysisControls = document.getElementById('analysis-controls');
-              if (analysisControls) {
-                analysisControls.classList.remove('hidden');
-              }
-              
-              // Hide the analysis in progress section
-              const analysisInProgress = document.getElementById('analysis-in-progress');
-              if (analysisInProgress) {
-                analysisInProgress.classList.add('hidden');
-              }
-              
-              // Show the no analysis message again
-              const noAnalysisMessage = document.getElementById('no-analysis-message');
-              if (noAnalysisMessage) {
-                noAnalysisMessage.classList.remove('hidden');
-              }
+              // Reset UI
+              analysisControls.classList.remove('hidden');
+              analysisProgress.classList.add('hidden');
               
               // Show error message
               alert(message);
@@ -287,15 +265,7 @@
             <p class="mt-1 text-gray-500"><%= t('company_reviews.analysis.run_analysis') %></p>
           </div>
           
-          <!-- Analysis in progress (hidden by default) -->
-          <div id="analysis-in-progress" class="py-12 text-center hidden">
-            <h3 class="text-lg font-medium text-gray-900"><%= t('company_reviews.analysis.analyzing') %></h3>
-            <div class="mt-4 max-w-md mx-auto">
-              <div class="w-full bg-gray-200 rounded-full h-3">
-                <div id="main-progress-bar" class="bg-blue-600 h-3 rounded-full" style="width: 0%"></div>
-              </div>
-            </div>
-          </div>
+          <!-- No additional HTML needed here as we've moved the progress bar to the main controls section -->
         <% end %>
       </div>
     <% end %>

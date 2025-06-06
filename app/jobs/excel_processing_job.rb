@@ -1,7 +1,7 @@
-require 'csv'
 require_relative '../services/reviews_analyzer'
+require 'roo'
 
-class CsvProcessingJob
+class ExcelProcessingJob
   include Sidekiq::Job
 
   def perform(csv_upload_id)
@@ -11,7 +11,7 @@ class CsvProcessingJob
     begin
       csv_upload.update(status: CsvUpload::STATUSES[:processing])
 
-      reviews, ratings = process_csv(csv_upload)
+      reviews, ratings = process_excel(csv_upload)
       reviews_text = reviews.join("\n\n")
 
       analyzer = ReviewsAnalyzer.new(reviews_text)
@@ -74,7 +74,7 @@ class CsvProcessingJob
 
       csv_upload.update(status: CsvUpload::STATUSES[:completed])
     rescue => e
-      Rails.logger.error("Error processing CSV #{csv_upload_id}: #{e.message}")
+      Rails.logger.error("Error processing Excel #{csv_upload_id}: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
       csv_upload.update(status: CsvUpload::STATUSES[:failed])
     end
@@ -82,40 +82,65 @@ class CsvProcessingJob
 
   private
 
-  def process_csv(csv_upload)
+  def process_excel(csv_upload)
     reviews = []
     ratings = []
 
-    csv_file = csv_upload.file.download
-    CSV.parse(csv_file, headers: true) do |row|
+    # Download the file and open it with Roo
+    temp_file = Tempfile.new(['excel', File.extname(csv_upload.file.filename.to_s)])
+    temp_file.binmode
+    temp_file.write(csv_upload.file.download)
+    temp_file.rewind
+
+    # Use Roo to open the Excel file
+    excel = Roo::Spreadsheet.open(temp_file.path)
+    sheet = excel.sheet(0) # Get the first sheet
+
+    # Get headers
+    headers = sheet.row(1).map(&:to_s).map(&:downcase)
+
+    # Process each row
+    (2..sheet.last_row).each do |row_num|
+      row_data = sheet.row(row_num)
       review_text = nil
       rating = nil
-      ['review', 'comment', 'feedback', 'text', 'content'].each do |column_name|
-        if row[column_name].present?
-          review_text = row[column_name]
-          break
-        end
-      end
-      ['rating', 'score', 'stars', 'grade'].each do |column_name|
-        if row[column_name].present?
-          rating = row[column_name].to_i
-          break
-        end
-      end
+
+      # Look for review text in common column names
+      review_column_index = find_column_index(headers, ['review', 'comment', 'feedback', 'text', 'content'])
+      review_text = row_data[review_column_index] if review_column_index
+
+      # Look for rating in common column names
+      rating_column_index = find_column_index(headers, ['rating', 'score', 'stars', 'grade'])
+      rating = row_data[rating_column_index].to_i if rating_column_index && row_data[rating_column_index].present?
+
+      # If no review text found in expected columns, take first non-empty cell
       if review_text.nil?
-        row.each do |header, value|
+        row_data.each_with_index do |value, index|
           if value.present?
-            review_text = value
+            review_text = value.to_s
             break
           end
         end
       end
+
       if review_text.present?
         reviews << review_text
         ratings << rating if rating.present?
       end
     end
+
+    temp_file.close
+    temp_file.unlink
+
     [reviews, ratings]
+  end
+
+  def find_column_index(headers, possible_names)
+    possible_names.each do |name|
+      index = headers.find_index { |h| h.include?(name) }
+      return index if index
+    end
+    nil
   end
 
   # Extraction helpers for OpenAI response
@@ -167,7 +192,6 @@ class CsvProcessingJob
       "neutral"
     end
   end
-
 
   def analyze_sentiment_from_ratings(ratings)
     positive_count = 0
