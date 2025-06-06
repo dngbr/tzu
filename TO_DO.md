@@ -1,0 +1,2 @@
+- test files processing (all but .csv which works)
+- add loading bar to file processing
