@@ -1,4 +1,4 @@
-require_relative '../services/reviews_analyzer'
+require_relative "../services/reviews_analyzer"
 
 class JsonProcessingJob
   include Sidekiq::Job
@@ -15,29 +15,29 @@ class JsonProcessingJob
 
       analyzer = ReviewsAnalyzer.new(reviews_text)
       analysis_response = analyzer.call
-      
+
       # Check if we have parsed JSON in the response
       parsed_json = analysis_response["parsed_json"]
-      
+
       if parsed_json.present?
         # Use the structured JSON response
-        summary = parsed_json['summary']
-        insights = parsed_json['key_insights'] || parsed_json['insights'] || []
-        recommendations = parsed_json['recommendations'] || []
-        
+        summary = parsed_json["summary"]
+        insights = parsed_json["key_insights"] || parsed_json["insights"] || []
+        recommendations = parsed_json["recommendations"] || []
+
         # Normalize sentiment to match allowed values
-        raw_sentiment = parsed_json['sentiment'].to_s.downcase
+        raw_sentiment = parsed_json["sentiment"].to_s.downcase
         sentiment = case raw_sentiment
-                    when 'positive'
-                      'positive'
-                    when 'negative'
-                      'negative'
-                    else
-                      'neutral'
-                    end
-        
+        when "positive"
+                      "positive"
+        when "negative"
+                      "negative"
+        else
+                      "neutral"
+        end
+
         # Store confidence score if available
-        sentiment_confidence = parsed_json['sentiment_confidence']
+        sentiment_confidence = parsed_json["sentiment_confidence"]
       else
         # Fallback to the old extraction methods
         summary = extract_summary(analysis_response)
@@ -94,18 +94,18 @@ class JsonProcessingJob
       data.each do |item|
         review_text = extract_review_text_from_json(item)
         rating = extract_rating_from_json(item)
-        
+
         if review_text.present?
           reviews << review_text
           ratings << rating if rating.present?
         end
       end
-    elsif data.is_a?(Hash) && data['reviews'].is_a?(Array)
+    elsif data.is_a?(Hash) && data["reviews"].is_a?(Array)
       # Object with reviews array
-      data['reviews'].each do |item|
+      data["reviews"].each do |item|
         review_text = extract_review_text_from_json(item)
         rating = extract_rating_from_json(item)
-        
+
         if review_text.present?
           reviews << review_text
           ratings << rating if rating.present?
@@ -115,39 +115,39 @@ class JsonProcessingJob
       # Single review object
       review_text = extract_review_text_from_json(data)
       rating = extract_rating_from_json(data)
-      
+
       if review_text.present?
         reviews << review_text
         ratings << rating if rating.present?
       end
     end
 
-    [reviews, ratings]
+    [ reviews, ratings ]
   end
 
   def extract_review_text_from_json(item)
     # Try common field names for review text
-    ['review', 'comment', 'feedback', 'text', 'content', 'description', 'message'].each do |field|
+    [ "review", "comment", "feedback", "text", "content", "description", "message" ].each do |field|
       return item[field] if item[field].present?
     end
 
     # If no standard field found, look for the longest string field
     longest_text = nil
     longest_length = 0
-    
+
     item.each do |key, value|
       if value.is_a?(String) && value.length > longest_length
         longest_text = value
         longest_length = value.length
       end
     end
-    
+
     longest_text
   end
 
   def extract_rating_from_json(item)
     # Try common field names for ratings
-    ['rating', 'score', 'stars', 'grade'].each do |field|
+    [ "rating", "score", "stars", "grade" ].each do |field|
       if item[field].present?
         rating = item[field].to_i
         return rating if rating.between?(1, 5)

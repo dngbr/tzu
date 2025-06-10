@@ -1,8 +1,8 @@
 module MyAccount
   class CompaniesController < ApplicationController
-    before_action :set_company, only: [:show, :edit, :update]
-    before_action :ensure_business_owner, only: [:new, :create]
-    before_action :ensure_company_owner, only: [:edit, :update]
+    before_action :set_company, only: [ :show, :edit, :update ]
+    before_action :ensure_business_owner, only: [ :new, :create ]
+    before_action :ensure_company_owner, only: [ :edit, :update ]
 
     def new
       # Check if user already has a company
@@ -43,14 +43,14 @@ module MyAccount
 
     def show
     end
-    
+
     def my_company
       @company = current_user.company
-      
+
       # If user doesn't have a company yet, redirect to create one
       unless @company
-        redirect_to new_my_account_company_path, notice: t('company.create_first')
-        return
+        redirect_to new_my_account_company_path, notice: t("company.create_first")
+        nil
       end
     end
 

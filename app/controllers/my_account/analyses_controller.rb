@@ -1,6 +1,6 @@
 module MyAccount
   class AnalysesController < ApplicationController
-    before_action :set_analysis, only: [:show]
+    before_action :set_analysis, only: [ :show ]
 
     def show
       @csv_upload = @analysis.csv_upload

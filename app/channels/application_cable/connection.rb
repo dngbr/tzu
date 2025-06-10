@@ -1,18 +1,18 @@
 module ApplicationCable
   class Connection < ActionCable::Connection::Base
     identified_by :current_user
-    
+
     def connect
       self.current_user = find_verified_user
-      logger.add_tags 'ActionCable', current_user.email
+      logger.add_tags "ActionCable", current_user.email
     end
-    
+
     private
-    
+
     def find_verified_user
       # Try to find user from Devise's Warden authentication
-      if env['warden'].authenticated?
-        verified_user = env['warden'].user
+      if env["warden"].authenticated?
+        verified_user = env["warden"].user
         logger.info "ActionCable connection established for user: #{verified_user.email}"
         verified_user
       else

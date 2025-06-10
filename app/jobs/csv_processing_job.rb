@@ -1,5 +1,5 @@
-require 'csv'
-require_relative '../services/reviews_analyzer'
+require "csv"
+require_relative "../services/reviews_analyzer"
 
 class CsvProcessingJob
   include Sidekiq::Job
@@ -16,29 +16,29 @@ class CsvProcessingJob
 
       analyzer = ReviewsAnalyzer.new(reviews_text)
       analysis_response = analyzer.call
-      
+
       # Check if we have parsed JSON in the response
       parsed_json = analysis_response["parsed_json"]
-      
+
       if parsed_json.present?
         # Use the structured JSON response
-        summary = parsed_json['summary']
-        insights = parsed_json['key_insights'] || parsed_json['insights'] || []
-        recommendations = parsed_json['recommendations'] || []
-        
+        summary = parsed_json["summary"]
+        insights = parsed_json["key_insights"] || parsed_json["insights"] || []
+        recommendations = parsed_json["recommendations"] || []
+
         # Normalize sentiment to match allowed values
-        raw_sentiment = parsed_json['sentiment'].to_s.downcase
+        raw_sentiment = parsed_json["sentiment"].to_s.downcase
         sentiment = case raw_sentiment
-                    when 'positive'
-                      'positive'
-                    when 'negative'
-                      'negative'
-                    else
-                      'neutral'
-                    end
-        
+        when "positive"
+                      "positive"
+        when "negative"
+                      "negative"
+        else
+                      "neutral"
+        end
+
         # Store confidence score if available
-        sentiment_confidence = parsed_json['sentiment_confidence']
+        sentiment_confidence = parsed_json["sentiment_confidence"]
       else
         # Fallback to the old extraction methods
         summary = extract_summary(analysis_response)
@@ -90,13 +90,13 @@ class CsvProcessingJob
     CSV.parse(csv_file, headers: true) do |row|
       review_text = nil
       rating = nil
-      ['review', 'comment', 'feedback', 'text', 'content'].each do |column_name|
+      [ "review", "comment", "feedback", "text", "content" ].each do |column_name|
         if row[column_name].present?
           review_text = row[column_name]
           break
         end
       end
-      ['rating', 'score', 'stars', 'grade'].each do |column_name|
+      [ "rating", "score", "stars", "grade" ].each do |column_name|
         if row[column_name].present?
           rating = row[column_name].to_i
           break
@@ -115,7 +115,7 @@ class CsvProcessingJob
         ratings << rating if rating.present?
       end
     end
-    [reviews, ratings]
+    [ reviews, ratings ]
   end
 
   # Extraction helpers for OpenAI response

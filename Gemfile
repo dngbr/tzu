@@ -43,9 +43,9 @@ gem "sidekiq", "~> 6.5.8"
 gem "csv"
 
 # Gems for text processing and analysis
-gem 'openai'
-gem 'ruby-openai'
-gem 'fuzzy_match', '~> 2.1'  # For text similarity and deduplication
+gem "openai"
+gem "ruby-openai"
+gem "fuzzy_match", "~> 2.1"  # For text similarity and deduplication
 
 # HTTP client for API calls
 gem "faraday"

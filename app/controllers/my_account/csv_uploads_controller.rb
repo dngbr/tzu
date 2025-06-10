@@ -1,7 +1,7 @@
 module MyAccount
   class CsvUploadsController < ApplicationController
     before_action :authenticate_user!
-    before_action :set_csv_upload, only: [:show]
+    before_action :set_csv_upload, only: [ :show ]
 
     def index
       @csv_uploads = current_user.csv_uploads.order(created_at: :desc)
@@ -28,15 +28,15 @@ module MyAccount
       if @csv_upload.save
         # Determine the file type and enqueue the appropriate job
         file_extension = File.extname(@csv_upload.file.filename.to_s).downcase
-        
+
         case file_extension
-        when '.csv'
+        when ".csv"
           CsvProcessingJob.perform_async(@csv_upload.id)
-        when '.xlsx', '.xls'
+        when ".xlsx", ".xls"
           ExcelProcessingJob.perform_async(@csv_upload.id)
-        when '.txt'
+        when ".txt"
           TextProcessingJob.perform_async(@csv_upload.id)
-        when '.json'
+        when ".json"
           JsonProcessingJob.perform_async(@csv_upload.id)
         else
           # Default to CSV processing for unknown formats

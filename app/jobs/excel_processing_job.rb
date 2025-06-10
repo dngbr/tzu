@@ -1,5 +1,5 @@
-require_relative '../services/reviews_analyzer'
-require 'roo'
+require_relative "../services/reviews_analyzer"
+require "roo"
 
 class ExcelProcessingJob
   include Sidekiq::Job
@@ -16,29 +16,29 @@ class ExcelProcessingJob
 
       analyzer = ReviewsAnalyzer.new(reviews_text)
       analysis_response = analyzer.call
-      
+
       # Check if we have parsed JSON in the response
       parsed_json = analysis_response["parsed_json"]
-      
+
       if parsed_json.present?
         # Use the structured JSON response
-        summary = parsed_json['summary']
-        insights = parsed_json['key_insights'] || parsed_json['insights'] || []
-        recommendations = parsed_json['recommendations'] || []
-        
+        summary = parsed_json["summary"]
+        insights = parsed_json["key_insights"] || parsed_json["insights"] || []
+        recommendations = parsed_json["recommendations"] || []
+
         # Normalize sentiment to match allowed values
-        raw_sentiment = parsed_json['sentiment'].to_s.downcase
+        raw_sentiment = parsed_json["sentiment"].to_s.downcase
         sentiment = case raw_sentiment
-                    when 'positive'
-                      'positive'
-                    when 'negative'
-                      'negative'
-                    else
-                      'neutral'
-                    end
-        
+        when "positive"
+                      "positive"
+        when "negative"
+                      "negative"
+        else
+                      "neutral"
+        end
+
         # Store confidence score if available
-        sentiment_confidence = parsed_json['sentiment_confidence']
+        sentiment_confidence = parsed_json["sentiment_confidence"]
       else
         # Fallback to the old extraction methods
         summary = extract_summary(analysis_response)
@@ -87,7 +87,7 @@ class ExcelProcessingJob
     ratings = []
 
     # Download the file and open it with Roo
-    temp_file = Tempfile.new(['excel', File.extname(csv_upload.file.filename.to_s)])
+    temp_file = Tempfile.new([ "excel", File.extname(csv_upload.file.filename.to_s) ])
     temp_file.binmode
     temp_file.write(csv_upload.file.download)
     temp_file.rewind
@@ -106,11 +106,11 @@ class ExcelProcessingJob
       rating = nil
 
       # Look for review text in common column names
-      review_column_index = find_column_index(headers, ['review', 'comment', 'feedback', 'text', 'content'])
+      review_column_index = find_column_index(headers, [ "review", "comment", "feedback", "text", "content" ])
       review_text = row_data[review_column_index] if review_column_index
 
       # Look for rating in common column names
-      rating_column_index = find_column_index(headers, ['rating', 'score', 'stars', 'grade'])
+      rating_column_index = find_column_index(headers, [ "rating", "score", "stars", "grade" ])
       rating = row_data[rating_column_index].to_i if rating_column_index && row_data[rating_column_index].present?
 
       # If no review text found in expected columns, take first non-empty cell
@@ -132,7 +132,7 @@ class ExcelProcessingJob
     temp_file.close
     temp_file.unlink
 
-    [reviews, ratings]
+    [ reviews, ratings ]
   end
 
   def find_column_index(headers, possible_names)

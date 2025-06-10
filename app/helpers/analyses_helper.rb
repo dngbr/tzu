@@ -5,7 +5,7 @@ module AnalysesHelper
     return text if I18n.locale == :en || text.blank?
 
     # Example: Google Translate API (pseudo-implementation)
-    api_key = ENV['TRANSLATE_API_KEY']
+    api_key = ENV["TRANSLATE_API_KEY"]
     target_lang = I18n.locale.to_s
 
     response = Faraday.post("https://translation.googleapis.com/language/translate/v2", {
@@ -16,7 +16,7 @@ module AnalysesHelper
 
     if response.success?
       json = JSON.parse(response.body)
-      json.dig('data', 'translations', 0, 'translatedText') || text
+      json.dig("data", "translations", 0, "translatedText") || text
     else
       text # fallback to original if translation fails
     end

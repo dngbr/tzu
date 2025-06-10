@@ -1,4 +1,4 @@
-require_relative '../services/reviews_analyzer'
+require_relative "../services/reviews_analyzer"
 
 class TextProcessingJob
   include Sidekiq::Job
@@ -15,29 +15,29 @@ class TextProcessingJob
 
       analyzer = ReviewsAnalyzer.new(reviews_text)
       analysis_response = analyzer.call
-      
+
       # Check if we have parsed JSON in the response
       parsed_json = analysis_response["parsed_json"]
-      
+
       if parsed_json.present?
         # Use the structured JSON response
-        summary = parsed_json['summary']
-        insights = parsed_json['key_insights'] || parsed_json['insights'] || []
-        recommendations = parsed_json['recommendations'] || []
-        
+        summary = parsed_json["summary"]
+        insights = parsed_json["key_insights"] || parsed_json["insights"] || []
+        recommendations = parsed_json["recommendations"] || []
+
         # Normalize sentiment to match allowed values
-        raw_sentiment = parsed_json['sentiment'].to_s.downcase
+        raw_sentiment = parsed_json["sentiment"].to_s.downcase
         sentiment = case raw_sentiment
-                    when 'positive'
-                      'positive'
-                    when 'negative'
-                      'negative'
-                    else
-                      'neutral'
-                    end
-        
+        when "positive"
+                      "positive"
+        when "negative"
+                      "negative"
+        else
+                      "neutral"
+        end
+
         # Store confidence score if available
-        sentiment_confidence = parsed_json['sentiment_confidence']
+        sentiment_confidence = parsed_json["sentiment_confidence"]
       else
         # Fallback to the old extraction methods
         summary = extract_summary(analysis_response)
@@ -103,7 +103,7 @@ class TextProcessingJob
       end
     end
 
-    [reviews, ratings]
+    [ reviews, ratings ]
   end
 
   # Extraction helpers for OpenAI response
