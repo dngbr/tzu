@@ -37,7 +37,7 @@ gem "devise" # Authentication framework
 # gem "image_processing", "~> 1.2"
 
 # Background processing
-gem "sidekiq", "~> 6.5.8"
+gem "sidekiq", "~> 8.0.4"
 
 # CSV parsing
 gem "csv"
