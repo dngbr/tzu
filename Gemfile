@@ -86,7 +86,7 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem "tailwindcss-rails", "~> 4.2"
+gem "tailwindcss-rails", "~> 4.4"
 
 gem "aws-sdk-s3", "~> 1.183"
 
